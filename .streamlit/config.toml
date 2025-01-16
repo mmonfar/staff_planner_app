@@ -1,0 +1,6 @@
+[theme]
+primaryColor = "#4CAF50"      # Adjust primary color if desired
+backgroundColor = "#FFFFFF"   # Light background color
+secondaryBackgroundColor = "#F0F0F0"  # Sidebar background
+textColor = "#000000"         # Dark text
+font = "sans serif"           # Default font
