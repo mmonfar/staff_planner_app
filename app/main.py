@@ -54,8 +54,16 @@ planner = StaffPlanner(unit_census=unit_census, vacation_days=vacation_days)
 
 # Model Calculations
 overtime_config_a = {'early': overtime_early, 'late': overtime_late, 'night': overtime_night}
-model_a = planner.calculate_model_a(overtime_config=overtime_config_a)
-model_b = planner.calculate_model_b(overtime_per_week=overtime_per_week_b)
+model_a = planner.calculate_model_a(
+    ratios={'sn': sn_a_ratio, 'pn': pn_a_ratio, 'hca': hca_a_ratio},
+    overtime_config=overtime_config_a
+)
+
+model_b = planner.calculate_model_b(
+    ratios={'sn': sn_b_ratio, 'hca': hca_b_ratio},
+    overtime_per_week=overtime_per_week_b
+)
+
 
 # Main Screen: Results Table
 st.subheader("Model Results Comparison")
@@ -84,12 +92,20 @@ with col1:
             unit_census=uc,
             vacation_days=vacation_days
         )
-        # Apply custom cost values
-        temp_planner.costs = costs
+        temp_planner.costs = costs  # Apply sidebar costs
 
-        # Calculate costs with the same custom parameters
-        model_a_costs.append(temp_planner.calculate_model_a(overtime_config=overtime_config_a)['total_cost'])
-        model_b_costs.append(temp_planner.calculate_model_b(overtime_per_week=overtime_per_week_b)['total_cost'])
+        # Calculate Model A with custom ratios and overtime
+        model_a_costs.append(temp_planner.calculate_model_a(
+            ratios={'sn': sn_a_ratio, 'pn': pn_a_ratio, 'hca': hca_a_ratio},
+            overtime_config=overtime_config_a
+        )['total_cost'])
+
+        # Calculate Model B with custom ratios and overtime
+        model_b_costs.append(temp_planner.calculate_model_b(
+            ratios={'sn': sn_b_ratio, 'hca': hca_b_ratio},
+            overtime_per_week=overtime_per_week_b
+        )['total_cost'])
+
 
     fig2, ax2 = plt.subplots(figsize=(6, 4))  # Adjust the width and height as desired
     

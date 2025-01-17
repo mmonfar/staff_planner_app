@@ -70,19 +70,20 @@ class StaffPlanner:
         
         return regular_cost + ot_cost
 
-    def calculate_model_a(self, overtime_config=None):
+    def calculate_model_a(self, ratios=None, overtime_config=None):
         shifts = 3
         weekly_hours = 40
-        ratios = {'sn': 8, 'pn': 12, 'hca': 16}
-        
+        # Use provided ratios or default to hardcoded values
+        ratios = ratios if ratios else {'sn': 8, 'pn': 12, 'hca': 16}
+    
         yearly_hours = self.calculate_yearly_hours(weekly_hours)
         needs = {}
         costs = {}
-        
+    
         for staff_type, ratio in ratios.items():
             staff_per_day = self.calculate_staff_per_day(ratio, shifts)
             needs[staff_type] = self.calculate_yearly_staff_needs(staff_per_day, yearly_hours)
-            
+        
             if staff_type == 'sn' and overtime_config:
                 total_ot_cost = 0
                 for shift_type, ot_hours in overtime_config.items():
@@ -96,26 +97,27 @@ class StaffPlanner:
                 costs[staff_type] = total_ot_cost
             else:
                 costs[staff_type] = needs[staff_type] * self.costs[staff_type]
-        
+    
         return {
             'needs': needs,
             'costs': costs,
             'total_cost': sum(costs.values())
         }
 
-    def calculate_model_b(self, overtime_per_week=0):
+    def calculate_model_b(self, ratios=None, overtime_per_week=0):
         shifts = 2
         weekly_hours = 48
-        ratios = {'sn': 3, 'hca': 16}
-        
+        # Use provided ratios or default to hardcoded values
+        ratios = ratios if ratios else {'sn': 3, 'hca': 16}
+    
         yearly_hours = self.calculate_yearly_hours(weekly_hours)
         needs = {}
         costs = {}
-        
+    
         for staff_type, ratio in ratios.items():
             staff_per_day = self.calculate_staff_per_day(ratio, shifts)
             needs[staff_type] = self.calculate_yearly_staff_needs(staff_per_day, yearly_hours)
-            
+        
             if staff_type == 'sn' and overtime_per_week > 0:
                 costs[staff_type] = self.calculate_overtime_cost(
                     staff_per_day,
@@ -124,7 +126,7 @@ class StaffPlanner:
                 )
             else:
                 costs[staff_type] = needs[staff_type] * self.costs[staff_type]
-        
+    
         return {
             'needs': needs,
             'costs': costs,
