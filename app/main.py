@@ -79,7 +79,15 @@ with col1:
     model_a_costs, model_b_costs = [], []
 
     for uc in unit_census_values:
-        temp_planner = StaffPlanner(unit_census=uc)
+        # Pass custom sidebar inputs for each unit_census
+        temp_planner = StaffPlanner(
+            unit_census=uc,
+            vacation_days=vacation_days
+        )
+        # Apply custom cost values
+        temp_planner.costs = costs
+
+        # Calculate costs with the same custom parameters
         model_a_costs.append(temp_planner.calculate_model_a(overtime_config=overtime_config_a)['total_cost'])
         model_b_costs.append(temp_planner.calculate_model_b(overtime_per_week=overtime_per_week_b)['total_cost'])
 
