@@ -19,31 +19,32 @@ st.subheader("Compare Workforce Planning Models (Model A & Model B)")
 # Sidebar: Inputs
 st.sidebar.header("Modify Parameters")
 
-# Unit census and vacation days
-unit_census = st.sidebar.number_input("Unit Census", min_value=1, value=32, step=1)
-vacation_days = st.sidebar.number_input("Vacation Days", min_value=0, value=30, step=1)
+# Unit census and vacation days (with an expander)
+with st.sidebar.expander("Units Census and Vacation Days", expanded=True):
+    unit_census = st.number_input("Unit Census", min_value=1, value=32, step=1)
+    vacation_days = st.number_input("Vacation Days", min_value=0, value=30, step=1)
 
-# Costs per discipline
-st.sidebar.subheader("Costs per Discipline")
-sn_cost = st.sidebar.number_input("Staff Nurse Cost", min_value=0.0, value=1.0, step=0.1)
-pn_cost = st.sidebar.number_input("Practical Nurse Cost", min_value=0.0, value=0.65, step=0.1)
-hca_cost = st.sidebar.number_input("Healthcare Assistant Cost", min_value=0.0, value=0.4, step=0.1)
+# Costs per discipline (with an expander)
+with st.sidebar.expander("Costs per Discipline", expanded=True):
+    sn_cost = st.number_input("Staff Nurse Cost", min_value=0.0, value=1.0, step=0.1)
+    pn_cost = st.number_input("Practical Nurse Cost", min_value=0.0, value=0.65, step=0.1)
+    hca_cost = st.number_input("Healthcare Assistant Cost", min_value=0.0, value=0.4, step=0.1)
 
-# Ratios and overtime for Model A
-st.sidebar.subheader("Model A Parameters")
-sn_a_ratio = st.sidebar.number_input("SN Ratio (Model A)", min_value=1, value=8, step=1)
-pn_a_ratio = st.sidebar.number_input("PN Ratio (Model A)", min_value=1, value=12, step=1)
-hca_a_ratio = st.sidebar.number_input("HCA Ratio (Model A)", min_value=1, value=16, step=1)
+# Ratios and overtime for Model A (with an expander)
+with st.sidebar.expander("Model A Parameters", expanded=True):
+    sn_a_ratio = st.number_input("SN Ratio (Model A)", min_value=1, value=8, step=1)
+    pn_a_ratio = st.number_input("PN Ratio (Model A)", min_value=1, value=12, step=1)
+    hca_a_ratio = st.number_input("HCA Ratio (Model A)", min_value=1, value=16, step=1)
 
-overtime_early = st.sidebar.number_input("Early Shift SN Overtime per Week (Model A)", min_value=0, value=1, step=1)
-overtime_late = st.sidebar.number_input("Late Shift SN Overtime per Week (Model A)", min_value=0, value=1, step=1)
-overtime_night = st.sidebar.number_input("Night SN Overtime per Week (Model A)", min_value=0, value=1, step=1)
+    overtime_early = st.number_input("Early Shift SN Overtime per Week (Model A)", min_value=0, value=1, step=1)
+    overtime_late = st.number_input("Late Shift SN Overtime per Week (Model A)", min_value=0, value=1, step=1)
+    overtime_night = st.number_input("Night SN Overtime per Week (Model A)", min_value=0, value=1, step=1)
 
-# Parameters for Model B
-st.sidebar.subheader("Model B Parameters")
-sn_b_ratio = st.sidebar.number_input("SN Ratio (Model B)", min_value=1, value=3, step=1)
-hca_b_ratio = st.sidebar.number_input("HCA Ratio (Model B)", min_value=1, value=16, step=1)
-overtime_per_week_b = st.sidebar.number_input("SN Overtime per Week (Model B)", min_value=0, value=5, step=1)
+# Parameters for Model B (with an expander)
+with st.sidebar.expander("Model B Parameters", expanded=True):
+    sn_b_ratio = st.number_input("SN Ratio (Model B)", min_value=1, value=3, step=1)
+    hca_b_ratio = st.number_input("HCA Ratio (Model B)", min_value=1, value=16, step=1)
+    overtime_per_week_b = st.number_input("SN Overtime per Week (Model B)", min_value=0, value=5, step=1)
 
 # Costs and ratios as dictionaries for StaffPlanner
 costs = {'sn': sn_cost, 'pn': pn_cost, 'hca': hca_cost}
@@ -63,7 +64,6 @@ model_b = planner.calculate_model_b(
     ratios={'sn': sn_b_ratio, 'hca': hca_b_ratio},
     overtime_per_week=overtime_per_week_b
 )
-
 
 # Main Screen: Results Table
 st.subheader("Model Results Comparison")
@@ -104,8 +104,7 @@ with col1:
         model_b_costs.append(temp_planner.calculate_model_b(
             ratios={'sn': sn_b_ratio, 'hca': hca_b_ratio},
             overtime_per_week=overtime_per_week_b
-        )['total_cost'])
-
+        )['total_cost'])  
 
     fig2, ax2 = plt.subplots(figsize=(6, 4))  # Adjust the width and height as desired
     
