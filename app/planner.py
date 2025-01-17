@@ -42,10 +42,16 @@ class StaffPlanner:
         shift_hours = self.model_a_shifts[shift_type]
         differential = 1.5
         
-        total_ot_hours = overtime_per_week * self.weeks * shift_hours
+        # Calculate overtime hours for this shift
+        total_ot_hours = overtime_per_week * self.weeks * shift_hours * staff_per_day
+        
+        # Calculate total hours needed for this number of staff
         total_hours_needed = staff_per_day * self.hours_per_year
+        
+        # Regular hours are total needed minus overtime
         regular_hours = total_hours_needed - total_ot_hours
         
+        # Calculate hourly rate and costs
         hourly_rate = self.costs['sn'] / yearly_hours
         regular_staff_needed = regular_hours / yearly_hours
         regular_cost = regular_staff_needed * self.costs['sn']
@@ -53,6 +59,53 @@ class StaffPlanner:
         ot_cost = total_ot_hours * hourly_rate * differential
         
         return regular_cost + ot_cost
+
+    def calculate_model_a(self, ratios=None, overtime_config=None):
+        shifts = 3
+        weekly_hours = 40
+        ratios = ratios if ratios else {'sn': 8, 'pn': 12, 'hca': 16}
+        
+        yearly_hours = self.calculate_yearly_hours(weekly_hours)
+        needs = {}
+        costs = {}
+        
+        for staff_type, ratio in ratios.items():
+            staff_per_day = self.calculate_staff_per_day(ratio, shifts)
+            needs[staff_type] = self.calculate_yearly_staff_needs(staff_per_day, yearly_hours)
+            
+            if staff_type == 'sn' and overtime_config:
+                total_ot_cost = 0
+                staff_per_shift = staff_per_day // 3
+                
+                # Initialize total cost with regular hours cost
+                total_reg_cost = needs[staff_type] * self.costs[staff_type]
+                
+                # Calculate overtime costs for each shift
+                for shift_type, ot_hours in overtime_config.items():
+                    if ot_hours > 0:
+                        shift_ot_cost = self.calculate_overtime_cost_a(
+                            staff_per_shift,
+                            yearly_hours,
+                            ot_hours,
+                            shift_type
+                        )
+                        total_ot_cost += shift_ot_cost
+                    
+                # For shifts with zero overtime, use the regular cost proportion
+                zero_ot_shifts = sum(1 for hours in overtime_config.values() if hours == 0)
+                if zero_ot_shifts > 0:
+                    regular_cost_per_shift = total_reg_cost / 3
+                    total_ot_cost += regular_cost_per_shift * zero_ot_shifts
+                
+                costs[staff_type] = total_ot_cost
+            else:
+                costs[staff_type] = needs[staff_type] * self.costs[staff_type]
+        
+        return {
+            'needs': needs,
+            'costs': costs,
+            'total_cost': sum(costs.values())
+        }
 
     def calculate_overtime_cost(self, staff_per_day, yearly_hours, overtime_per_week):
         shift_hours = 12  # Model B uses 12-hour shifts
@@ -70,54 +123,19 @@ class StaffPlanner:
         
         return regular_cost + ot_cost
 
-    def calculate_model_a(self, ratios=None, overtime_config=None):
-        shifts = 3
-        weekly_hours = 40
-        # Use provided ratios or default to hardcoded values
-        ratios = ratios if ratios else {'sn': 8, 'pn': 12, 'hca': 16}
-    
-        yearly_hours = self.calculate_yearly_hours(weekly_hours)
-        needs = {}
-        costs = {}
-    
-        for staff_type, ratio in ratios.items():
-            staff_per_day = self.calculate_staff_per_day(ratio, shifts)
-            needs[staff_type] = self.calculate_yearly_staff_needs(staff_per_day, yearly_hours)
-        
-            if staff_type == 'sn' and overtime_config:
-                total_ot_cost = 0
-                for shift_type, ot_hours in overtime_config.items():
-                    if ot_hours > 0:
-                        total_ot_cost += self.calculate_overtime_cost_a(
-                            staff_per_day // 3,  # Divide by 3 as we have 3 shifts
-                            yearly_hours,
-                            ot_hours,
-                            shift_type
-                        )
-                costs[staff_type] = total_ot_cost
-            else:
-                costs[staff_type] = needs[staff_type] * self.costs[staff_type]
-    
-        return {
-            'needs': needs,
-            'costs': costs,
-            'total_cost': sum(costs.values())
-        }
-
     def calculate_model_b(self, ratios=None, overtime_per_week=0):
         shifts = 2
         weekly_hours = 48
-        # Use provided ratios or default to hardcoded values
         ratios = ratios if ratios else {'sn': 3, 'hca': 16}
-    
+        
         yearly_hours = self.calculate_yearly_hours(weekly_hours)
         needs = {}
         costs = {}
-    
+        
         for staff_type, ratio in ratios.items():
             staff_per_day = self.calculate_staff_per_day(ratio, shifts)
             needs[staff_type] = self.calculate_yearly_staff_needs(staff_per_day, yearly_hours)
-        
+            
             if staff_type == 'sn' and overtime_per_week > 0:
                 costs[staff_type] = self.calculate_overtime_cost(
                     staff_per_day,
@@ -126,33 +144,9 @@ class StaffPlanner:
                 )
             else:
                 costs[staff_type] = needs[staff_type] * self.costs[staff_type]
-    
+        
         return {
             'needs': needs,
             'costs': costs,
             'total_cost': sum(costs.values())
         }
-
-# Usage example
-if __name__ == "__main__":
-    planner = StaffPlanner(unit_census=32)
-    
-    # Calculate Model A results with overtime
-    overtime_config_a = {
-        'early': 1,  # 2 overtime shifts per week in early shift
-        'late': 1,    # 1 overtime shifts per week in late shift
-        'night': 1   # 1 overtime shift per week in night shift
-    }
-    
-    model_a = planner.calculate_model_a(overtime_config=overtime_config_a)
-    print("\nModel A Results (with overtime):")
-    print(f"Staff Needs: {model_a['needs']}")
-    print(f"Costs: {model_a['costs']}")
-    print(f"Total Cost: {model_a['total_cost']}")
-    
-    # Calculate Model B results with overtime
-    model_b = planner.calculate_model_b(overtime_per_week=5)
-    print("\nModel B Results (with overtime):")
-    print(f"Staff Needs: {model_b['needs']}")
-    print(f"Costs: {model_b['costs']}")
-    print(f"Total Cost: {model_b['total_cost']}")
