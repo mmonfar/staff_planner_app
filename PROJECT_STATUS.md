@@ -138,6 +138,19 @@ tasks needing domain input, not code. Then 16, gated by 15. Then 17.
 - No weighted "safety-adjusted cost" scalar. Weighted sums cannot recover
   solutions on non-convex regions of the Pareto frontier.
 
+## Queued: task profile activity study
+`DEFAULT_TASK_PROFILE` in `app/roles.py` divides care hours across the ten task
+categories. It is an estimate, not an activity study, and it directly sets how
+much of the establishment must be registered — a profile with more medication
+and assessment forces more registered hours, one with more personal care forces
+fewer. It is therefore the single assumption with the most leverage over the
+answer.
+
+To resolve: a work-sampling or time-and-motion study on the unit, or a published
+activity study for the specialty. Vary the profile by unit type — a surgical
+ward and a stroke unit do not divide their hours alike. Deferred deliberately,
+not forgotten; tracked as `gap.task_profile_unsourced`.
+
 ## Queued: regulatory scope by jurisdiction
 `app/roles.py` `from_regulator()` is a documented stub, not a promise. The
 procedure is written into its docstring: fetch the regulator's scope-of-practice
