@@ -2,7 +2,7 @@
 
 Maintained by the orchestrator session. Update on every completed task.
 
-**Completion: 20 / 22 (91%). Solved, surfaced and auditable.**
+**Completion: 24 / 25 (96%). Scope-aware, licensed, CI'd.**
 
 ## The problem (restated 2026-09-18)
 
@@ -61,6 +61,9 @@ being tractable. Aggregate mix = MILP. Individual roster = metaheuristic.
 | 19 | **Absence uplift** | annual leave and unplanned absence modelled separately; implied uplift 1.147 reported against the 1.46 benchmark |
 | 20 | **Stochastic demand** | `app/stochastic.py` — NB census, Dirichlet acuity mix, p90 policy, analytic baseline gate |
 | 12 | **Acuity baseline** | `app/acuity.py` — SNCT ladder L0 4.35 → L3 26.2 HPPD (6.0x); CMI tilts the mix, ladder converts to hours |
+| 26 | **Scope of practice** | `app/roles.py` — 10 task categories, per-role capability, porter added; RN share now emerges rather than being imposed |
+| 9 | **LICENSE** | Apache 2.0 |
+| 10 | **CI** | `.github/workflows/tests.yml` — pytest on 3.11/3.12, plus a check that SOURCES.md is in step with evidence.db |
 | 24 | **Optimiser surfaced in UI** | solved plan per shift, baseline-gate status, Pareto front chart + table, decision recorder |
 | 25 | **Decision audit trail** | `app/audit.py` + `research/planning_log.db` — scenario, plan, gate status, evidence fingerprint, rationale, supersession |
 | 23 | **Absence feedback wired** | understaffing raises sickness, which raises the establishment; `absence_is_endogenous` on by default |
@@ -75,8 +78,6 @@ being tractable. Aggregate mix = MILP. Individual roster = metaheuristic.
 | # | Task | Blocks | P |
 |---|---|---|---|
 | 21 | **Surface stochasticity in the UI** — the app still shows single numbers; p90 band, shortfall risk and gate status are computed but not displayed | — | P0 |
-| 9 | LICENSE (needs owner's choice) | — | P2 |
-| 10 | CI — pytest on push | — | P2 |
 | 11 | MCP config: pin interpreter, drop duplicate defs (cross-repo) | — | P2 |
 | 14 | NSGA-II — **only if** 16 proves intractable or wellbeing goes nonlinear | — | HOLD |
 
@@ -108,10 +109,14 @@ tasks needing domain input, not code. Then 16, gated by 15. Then 17.
 - **RETRACTED: "CMI is a weak lever."** That came from a curve fitted inside one
   surgical specialty, where restricted acuity range attenuates the slope. The
   SNCT ladder spans 6.0x. Acuity is the dominant driver.
-- **All roles contribute equally to care hours** (`ROLE_HOURS_CONTRIBUTION` is
-  1.0 across SN/PN/HCA), so only the skill-mix floor distinguishes grades. Real
-  scopes of practice differ — some care can only be delivered by a registered
-  nurse. Needs a clinical view before the front is trusted at low RN shares.
+- **RESOLVED: roles are no longer interchangeable.** Demand splits across 10
+  task categories and each role carries what it may perform versus assist with.
+  The registered share now emerges at ~36% from restricted work alone.
+- **Task profile is an assumption.** How care hours divide across categories is
+  not an activity study, and it drives how much of the establishment must be
+  registered. Replace with local observation; vary it by unit type.
+- **Only the UK catalogue is populated**, and from a considered reading rather
+  than an NMC extract. No catalogue is marked verified.
 - **Assumptions still needing local data:** `census_dispersion` 1.6,
   `cmi_sd` 0.15, `mix_concentration` 40, `cmi_tilt` 1.0, and `DEFAULT_BASE_MIX`.
   The tilt and base mix matter most — they set how CMI maps onto the ladder.
@@ -132,6 +137,24 @@ tasks needing domain input, not code. Then 16, gated by 15. Then 17.
   broken — fix that, do not tune the method.
 - No weighted "safety-adjusted cost" scalar. Weighted sums cannot recover
   solutions on non-convex regions of the Pareto frontier.
+
+## Queued: regulatory scope by jurisdiction
+`app/roles.py` `from_regulator()` is a documented stub, not a promise. The
+procedure is written into its docstring: fetch the regulator's scope-of-practice
+publication, extract grades and permitted activities, map onto `Task` keeping
+the regulator's own wording for audit, record as a source with its retrieval
+date, and mark `verified` only after a human check.
+
+Two constraints found while scoping it:
+- Scope is often **not national** — per state in the US, per province in Canada.
+  Canada's RPN is a regulated profession in BC, AB, SK and MB only. "US" is not
+  one answer.
+- Saudi Arabia reportedly has **no clearly articulated scope for all nursing
+  categories**, so an empty result there may be correct rather than a scraping
+  failure.
+
+Regulators located and recorded: DoH Abu Dhabi (AE), CNO and CLPNA (CA).
+Spain's TCAE scope was not found in this pass.
 
 ## Two records, two purposes
 - `research/evidence.db` — what the literature says. Committed; regenerable.

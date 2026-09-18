@@ -26,6 +26,7 @@ from app.optimise import (
     pareto_front,
     solve,
 )
+from app.roles import CATALOGUES, Task, catalogue as role_catalogue
 from app.planner import (
     MODEL_A_SHIFTS,
     MODEL_B_SHIFTS,
@@ -108,11 +109,20 @@ with sb.expander("Model B — 2 × 12h, 48h week", expanded=True):
     b_ot = st.number_input("SN overtime h/week", min_value=0, value=0, step=1, key="b_ot")
 
 with sb.expander("Relative costs", expanded=False):
-    sn_cost = st.number_input("Staff Nurse", min_value=0.0, value=1.0, step=0.05)
-    pn_cost = st.number_input("Practical Nurse", min_value=0.0, value=0.65, step=0.05)
+    sn_cost = st.number_input("Registered Nurse", min_value=0.0, value=1.0, step=0.05)
+    pn_cost = st.number_input("Nursing Associate", min_value=0.0, value=0.65, step=0.05)
     hca_cost = st.number_input("Healthcare Assistant", min_value=0.0, value=0.4, step=0.05)
+    porter_cost = st.number_input("Porter / Support Worker", min_value=0.0,
+                                  value=0.3, step=0.05)
 
-costs = {"sn": sn_cost, "pn": pn_cost, "hca": hca_cost}
+with sb.expander("Jurisdiction", expanded=False):
+    jurisdiction = st.selectbox(
+        "Role catalogue", sorted(CATALOGUES), index=sorted(CATALOGUES).index("UK"),
+        help="Which grades exist, and what each is permitted to do. Scope of "
+             "practice is not universal and often not even national.",
+    )
+
+costs = {"sn": sn_cost, "pn": pn_cost, "hca": hca_cost, "porter": porter_cost}
 MODEL_A = Model("Model A", MODEL_A_SHIFTS, 40, {"sn": a_sn, "pn": a_pn, "hca": a_hca})
 MODEL_B = Model("Model B", MODEL_B_SHIFTS, 48, {"sn": b_sn, "hca": b_hca})
 
@@ -269,6 +279,22 @@ st.caption(
 # --- solved establishment ----------------------------------------------------
 
 st.subheader("What should we actually staff?")
+
+active_catalogue = role_catalogue(jurisdiction)
+if not active_catalogue.roles:
+    st.error(
+        f"**No role catalogue for {jurisdiction}.** {active_catalogue.notes} "
+        "Planning this ward with another country's grades would be worse than "
+        "not planning it, so the solver is not run. See `app/roles.py` "
+        "`from_regulator()` for how this gets filled."
+    )
+    st.stop()
+if not active_catalogue.verified:
+    st.info(
+        f"The {jurisdiction} catalogue is a considered reading, not a "
+        "citation-backed extract from the regulator. Check it against the "
+        "relevant standards before operational use."
+    )
 st.caption(
     "Ratios above are tested, not trusted. Here they are solved for: the "
     "cheapest headcount per shift that meets demand at the required skill mix. "
@@ -277,10 +303,10 @@ st.caption(
 )
 
 min_rn = st.slider(
-    "Minimum registered-nurse share of care hours", 0.30, 0.90,
-    DEFAULT_MIN_RN_SHARE, 0.05,
-    help="Enforced on every shift, not as a daily average. Averages let a "
-         "solver stack nurses onto days and leave the night bare.",
+    "Additional registered-nurse floor", 0.0, 0.90, DEFAULT_MIN_RN_SHARE, 0.05,
+    help="A policy floor ON TOP of whatever scope of practice already forces. "
+         "At 0 the registered share is whatever the restricted tasks require - "
+         "medication, clinical assessment and procedures cannot be delegated.",
 )
 
 
@@ -328,6 +354,22 @@ for col, (label, model) in zip(sol_cols, (("Model A", MODEL_A), ("Model B", MODE
         m[0].metric("Cost/day", f"{e.daily_cost:.1f}")
         m[1].metric("RN share", f"{e.rn_share:.0%}")
         m[2].metric("Wellbeing", f"{e.wellbeing_score:.0f}/100")
+        by_role: dict[str, dict[str, float]] = {}
+        for (role, task), hours in e.task_hours.items():
+            by_role.setdefault(task, {})[role] = round(hours, 1)
+        if by_role:
+            with st.expander("Who does what"):
+                st.dataframe(
+                    pd.DataFrame([{"task": t, **r} for t, r in sorted(by_role.items())]
+                                 ).fillna(0),
+                    hide_index=True, use_container_width=True,
+                )
+                st.caption(
+                    "Hours are allocated only to roles permitted to do that "
+                    "work. Medication, clinical assessment and procedures "
+                    "cannot go to an assistant, which is what stops a cheap "
+                    "plan being an undeliverable one."
+                )
         if e.compliant:
             st.success("Compliant with working-time limits")
         else:

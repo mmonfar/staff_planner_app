@@ -25,13 +25,19 @@ Regenerate with `python research/ingest.py report`.
 | `demand.rest_factor` | 1.46 | multiplier | default | verified | yang-2023-bmcnurs |
 | `demand.snct_uplift` | 0.22 | fraction | soft | verified | snct-multipliers-nihr |
 | `gap.snct_level_multipliers` | RESOLVED | multiplier per level | soft | verified | snct-multipliers-nihr |
+| `gap.task_profile_unsourced` | assumption | fraction per task category | soft | unverified | snct-nihr-2020 |
 | `gap.ca_medsurg_ratio` | 1:5 or 1:6 | nurse:patients | hard | unverified | ca-title22-70217 |
+| `gap.role_catalogues_unverified` | UK only, unverified | - | hard | unverified | cno-scope-of-practice |
+| `gap.sa_scope_undefined` | UNRESOLVED | - | hard | unverified | cno-scope-of-practice |
 | `quality.long_shift.error_risk` | 3.0 | relative risk | soft | partial | rogers-2004-healthaff |
 | `quality.missed_care.prevalence` | 0.86 | fraction of RNs | soft | partial | ball-rn4cast-missed-care |
 | `quality.mortality_or_per_10pct_degree_nurses` | 0.929 | odds ratio (95% CI 0.886-0.973) | soft | verified | aiken-2014-lancet |
 | `quality.mortality_or_per_extra_patient` | 1.068 | odds ratio (95% CI 1.031-1.106) | soft | verified | aiken-2014-lancet |
 | `quality.staffing_gap_vs_adverse_events` | -0.567 | Pearson r (p = 0.021) | soft | verified | yang-2023-bmcnurs |
 | `quality.staffing_gap_vs_satisfaction` | 0.653 | Pearson r (p = 0.006) | soft | verified | yang-2023-bmcnurs |
+| `scope.ae_competence_based` | education, licensure, competence | basis | hard | partial | doh-abudhabi-nursing-scope |
+| `scope.ca_rpn_is_regional` | BC, AB, SK, MB | provinces | hard | verified | cno-scope-of-practice |
+| `scope.is_jurisdictional` | true | boolean | hard | verified | cno-scope-of-practice |
 | `skillmix.single_ratio_exists` | false | boolean | hard | partial | nice-sg1-2014 |
 | `wellbeing.absence_is_endogenous` | true | boolean | hard | verified | dallora-2025-jamanetwopen |
 | `wellbeing.day_shift.fatigued_fraction` | 0.0052 | fraction of work time | soft | verified | kim-2026-jonm |
@@ -80,6 +86,27 @@ Regenerate with `python research/ingest.py report`.
 - <https://leginfo.legislature.ca.gov/faces/billTextClient.xhtml?bill_id=199920000AB394>
 - retrieved 2026-09-18 via web
 - GAP: sources disagree between 1:5 and 1:6 for medical/surgical (likely the 2005 phase-down). Primary CDPH and CHCF fetches failed (DNS/timeout). Do not encode until resolved.
+
+### `clpna-lpn-scope`
+- **Determining Licensed Practical Nurse Scope of Practice**
+- College of Licensed Practical Nurses of Alberta · 2024 · CA · standard
+- <https://www.clpna.com/wp-content/uploads/2024/01/Determining-Licensed-Practical-Nurse-Scope-of-Practice-ID-125614.pdf>
+- retrieved 2026-09-18 via web
+- Practice guideline for deciding whether an activity falls inside LPN scope.
+
+### `cno-scope-of-practice`
+- **Scope of Practice Practice Standard**
+- College of Nurses of Ontario · 2023 · CA · standard
+- <https://cno.org/Assets/CNO/Documents/Standard-and-Learning/Practice-Standards/49041-scope-of-practice.pdf>
+- retrieved 2026-09-18 via web
+- Canadian scope is provincial, not national: CNO (Ontario), BCCNM (BC), CLPNA (Alberta) each define it. RPN is a regulated profession only in BC, AB, SK and MB.
+
+### `doh-abudhabi-nursing-scope`
+- **Scope of Practice - Nursing**
+- Department of Health, Abu Dhabi · 2022 · AE · standard
+- <https://www.doh.gov.ae/-/media/59C71DCFBE58464E9DBCE9463F05DA88.ashx>
+- retrieved 2026-09-18 via web
+- Ties permitted activity to education, licensure and competence. Located, not yet extracted into a role catalogue.
 
 ### `ewtd-2003-88-ec`
 - **Directive 2003/88/EC concerning certain aspects of the organisation of working time**
@@ -192,6 +219,7 @@ visible rather than silently missing.
 | 2026-09-18 | WebFetch | pmc.ncbi.nlm.nih.gov/articles/PMC13385972 (Kim 2026) | fatigue fractions by shift sequence obtained |
 | 2026-09-18 | WebFetch | pmc.ncbi.nlm.nih.gov/articles/PMC12015667 (Dall Ora 2025) | sickness-absence ORs for long shifts, skill mix, part-time, bank/agency |
 | 2026-09-18 | WebFetch | frontiersin.org safe limits on work hours review | FAILED DNS timeout |
+| 2026-09-18 | WebSearch | nursing regulator scope of practice Spain TCAE Canada LPN RPN UAE Saudi | regulators located for CA and AE; SA scope reportedly not articulated for all categories; ES/TCAE not found |
 | 2026-09-18 | WebSearch | SNCT acuity level 0 1a 1b 2 3 multiplier table | confirmed 5 levels + 22% uplift; multipliers proprietary to Shelford |
 | 2026-09-18 | WebSearch | RAFAELA OPCq nursing intensity classification | OPCq/PAONCIL located; 25.2 NCI points per nurse on adult wards |
 | 2026-09-18 | WebSearch | Nursing Activities Score NAS ICU nursing time | 0-176.8% range, 4.8 min/point, pooled mean 66.2% obtained |

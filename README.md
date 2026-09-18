@@ -21,6 +21,13 @@ Every clinical and regulatory constant carries a citation. See
 - **Case-mix sensitivity** — where each model stops coping as CMI rises.
 - **Solved establishments** — a MILP finds the cheapest compliant staffing per
   shift, so ratios are an output rather than an input, as NICE SG1 requires.
+- **Scope of practice** — demand splits across task categories and each grade
+  covers only what it is permitted to do, so a cheap plan cannot be an
+  undeliverable one. Support roles (porter) carry the hours they really take.
+- **Jurisdiction-aware** — role catalogues are keyed by country, because Spain's
+  TCAE, Canada's LPN/RPN and the UK's nursing associate do not map onto one
+  another. Only the UK catalogue is populated; the rest refuse to plan rather
+  than silently substituting UK grades.
 - **Exact Pareto front** over cost and registered-nurse share, traced by the
   epsilon-constraint method.
 - **Wellbeing index** from five studies, with EWTD breach flags.
@@ -100,6 +107,10 @@ defaults. Do not present results as staffing advice.
 Assumptions still needing local calibration are listed in the app's *Evidence
 and assumptions* panel and in [PROJECT_STATUS.md](PROJECT_STATUS.md): the
 CMI→acuity tilt, the base acuity mix, census dispersion and CMI variability.
+
+## 📄 Licence
+
+Apache License 2.0 — see [LICENSE](LICENSE).
 
 ## 🔌 Local MCP config
 

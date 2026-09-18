@@ -1,17 +1,24 @@
-"""Find the cheapest skill mix that is safe, compliant and humane.
+"""Find the cheapest staffing that is safe, deliverable, compliant and humane.
 
 This is where ratios stop being an input. NICE SG1 is explicit that no single
 nurse-to-patient ratio fits every ward and that each ward must set its own
 establishment; this module does that, by solving for headcount rather than
 asking for a ratio and reporting what it costs.
 
-**Why an exact solver and not a metaheuristic.** The aggregate skill-mix
-problem is tiny — three roles across two or three shifts, so nine to twelve
-integer variables. Mixed-integer programming solves it to proven optimality in
-milliseconds. A genetic algorithm or annealer would return an approximation,
-cost reproducibility, and buy nothing. Metaheuristics earn their place at
-*individual rostering* — assigning named staff to dates, where the space
-explodes — not here.
+**Deliverability, not just volume.** An earlier version counted every care hour
+the same, so a plan could be cheap because it was assistant-heavy — and
+undeliverable, because a healthcare assistant may not give medication or make a
+clinical assessment. Demand is now split into task categories (`app.roles`) and
+covered per task, by roles permitted to do that task. The registered-nurse share
+is no longer an imposed floor; it emerges from the work that only a registered
+nurse may do.
+
+**Why an exact solver and not a metaheuristic.** Twelve integer headcount
+variables and a few dozen continuous allocation variables solve to proven
+optimality in milliseconds. A genetic algorithm or annealer would return an
+approximation, cost reproducibility, and buy nothing. Metaheuristics earn their
+place at *individual rostering* — assigning named staff to dates, where the
+space explodes — not here.
 
 Every result is checked against two baselines before it is reportable: random
 search and hill-climbing with random restarts, on a comparable budget. If a
@@ -27,32 +34,32 @@ from dataclasses import dataclass, field
 
 import pulp
 
-from app.planner import DAYS_PER_YEAR, DEFAULT_COSTS, Model
+from app.planner import DAYS_PER_YEAR, Model
+from app.roles import (
+    DEFAULT_MIN_LEAD_SHARE,
+    DEFAULT_TASK_PROFILE,
+    UK,
+    RoleCatalogue,
+    Task,
+    task_demand,
+)
 from app.wellbeing import ShiftPattern, assess
 
-# Care hours contributed per rostered hour, by role. Registered nurses can
-# deliver any part of the care; support roles cannot, so a plan cannot be made
-# safe simply by buying more of the cheapest grade — hence the skill-mix floor
-# below rather than a pure cost minimisation.
-ROLE_HOURS_CONTRIBUTION = {"sn": 1.0, "pn": 1.0, "hca": 1.0}
+DEFAULT_COSTS = {"sn": 1.0, "pn": 0.65, "hca": 0.4, "porter": 0.3}
 
-# Minimum share of care hours delivered by registered nurses. A richer mix
-# lowers both mortality (aiken-2014-lancet) and sickness absence
-# (dallora-2025-jamanetwopen). The floor is a policy choice, not a published
-# constant — it is the lever the epsilon-constraint sweep moves.
-DEFAULT_MIN_RN_SHARE = 0.55
+# An additional policy floor on registered-nurse hours, over and above whatever
+# scope of practice already forces. A richer mix lowers both mortality
+# (aiken-2014-lancet) and sickness absence (dallora-2025-jamanetwopen). This is
+# the lever the epsilon-constraint sweep moves; 0.0 leaves scope to decide.
+DEFAULT_MIN_RN_SHARE = 0.0
 
 MAX_PER_ROLE_PER_SHIFT = 40
+REGISTERED_ROLE = "sn"
 
 
 def _solver():
-    """CBC, preferring the non-deprecated entry point where it is installed.
-
-    `PULP_CBC_CMD` is removed in PuLP 4.0 in favour of `COIN_CMD`; falling back
-    keeps this working on either.
-    """
-    available = pulp.listSolvers(onlyAvailable=True)
-    if "COIN_CMD" in available:
+    """CBC, preferring the non-deprecated entry point where it is installed."""
+    if "COIN_CMD" in pulp.listSolvers(onlyAvailable=True):
         return pulp.COIN_CMD(msg=False)
     return pulp.PULP_CBC_CMD(msg=False)
 
@@ -69,12 +76,19 @@ class Establishment:
     wellbeing_score: float = 0.0
     compliant: bool = True
     breaches: tuple[str, ...] = ()
+    task_hours: dict[tuple[str, str], float] = field(default_factory=dict)
 
     def on_shift(self, shift: str) -> dict[str, int]:
         return {r: n for (r, s), n in self.headcount.items() if s == shift and n}
 
     def total_headcount(self) -> int:
         return sum(self.headcount.values())
+
+    def hours_by_task(self) -> dict[str, float]:
+        out: dict[str, float] = {}
+        for (role, task), hours in self.task_hours.items():
+            out[task] = out.get(task, 0.0) + hours
+        return out
 
 
 def solve(
@@ -83,79 +97,121 @@ def solve(
     costs: dict[str, float] = None,
     min_rn_share: float = DEFAULT_MIN_RN_SHARE,
     roles: tuple[str, ...] = None,
+    catalogue: RoleCatalogue = UK,
+    task_profile: dict[Task, float] = None,
+    min_lead_share: dict[Task, float] = None,
 ) -> Establishment:
-    """Cheapest headcount meeting `demand_hours` of care at the required mix.
+    """Cheapest headcount that can actually deliver `demand_hours` of care.
 
     `demand_hours` is care hours for one day — take it from the stochastic
     layer's chosen percentile, not from mean demand.
     """
     costs = costs or DEFAULT_COSTS
-    roles = roles or tuple(costs)
+    roles = roles or tuple(k for k in catalogue.keys() if k in costs)
+    task_profile = task_profile or DEFAULT_TASK_PROFILE
+    min_lead_share = min_lead_share or DEFAULT_MIN_LEAD_SHARE
     shifts = model.shifts
+    day_hours = sum(shifts.values())
+
+    demand_by_task = task_demand(demand_hours, task_profile)
 
     problem = pulp.LpProblem("establishment", pulp.LpMinimize)
     # `problem.add_variable` rather than `pulp.LpVariable(...)`: constructing
-    # variables directly is deprecated and is removed in PuLP 4.0.
+    # variables directly is deprecated and removed in PuLP 4.0.
     x = {
-        (r, s): problem.add_variable(f"x_{r}_{s}", lowBound=0,
+        (r, s): problem.add_variable(f"n_{r}_{s}", lowBound=0,
                                      upBound=MAX_PER_ROLE_PER_SHIFT, cat="Integer")
         for r in roles for s in shifts
     }
+    # Hours each role spends on each task, per shift. Only created where the
+    # role is permitted to cover the task, so scope is structural rather than a
+    # constraint the solver could trade away.
+    y = {
+        (r, s, t): problem.add_variable(f"h_{r}_{s}_{t.value}", lowBound=0)
+        for r in roles for s in shifts for t in Task
+        if catalogue.roles[r].can_cover(t)
+    }
 
-    def hours(role, shift):
-        return x[(role, shift)] * shifts[shift] * ROLE_HOURS_CONTRIBUTION[role]
+    problem += pulp.lpSum(x[(r, s)] * shifts[s] * costs[r] for r in roles for s in shifts)
 
-    total_hours = pulp.lpSum(hours(r, s) for r in roles for s in shifts)
-    rn_hours = pulp.lpSum(hours("sn", s) for s in shifts) if "sn" in roles else 0
+    for s, length in shifts.items():
+        share = length / day_hours
 
-    # Cost per care hour, so shift patterns of different lengths compare fairly.
-    problem += pulp.lpSum(
-        x[(r, s)] * shifts[s] * costs[r] for r in roles for s in shifts
-    )
+        for r in roles:
+            # Nobody can be allocated more hours than they are rostered for.
+            allocated = pulp.lpSum(y[k] for k in y if k[0] == r and k[1] == s)
+            problem += allocated <= x[(r, s)] * length, f"capacity_{r}_{s}"
 
-    problem += total_hours >= demand_hours, "coverage"
-    # Every shift must be covered, and covered at the required mix. A global
-    # skill-mix floor alone is gameable: the solver stacks registered nurses
-    # onto one shift and leaves the night with a single nurse to 32 patients,
-    # which satisfies the daily average and is indefensible on the ward.
-    for s in shifts:
-        share = shifts[s] / sum(shifts.values())
-        shift_hours_total = pulp.lpSum(hours(r, s) for r in roles)
-        problem += shift_hours_total >= share * demand_hours, f"cover_{s}"
-        if "sn" in roles:
-            problem += (
-                hours("sn", s) >= min_rn_share * shift_hours_total,
-                f"skill_mix_{s}",
-            )
-            problem += x[("sn", s)] >= 1, f"rn_present_{s}"
+        for t in Task:
+            required = demand_by_task[t] * share
+            if required <= 0:
+                continue
+            covering = [y[(r, s, t)] for r in roles if (r, s, t) in y]
+            if not covering:
+                raise ValueError(
+                    f"no role in the {catalogue.jurisdiction} catalogue can cover "
+                    f"{t.value}; the plan would be undeliverable"
+                )
+            problem += pulp.lpSum(covering) >= required, f"cover_{t.value}_{s}"
+
+            # A task cannot be staffed entirely by people who may only assist.
+            lead_floor = min_lead_share.get(t, 1.0)
+            if lead_floor > 0:
+                leading = [
+                    y[(r, s, t)] for r in roles
+                    if (r, s, t) in y and catalogue.roles[r].can_lead(t)
+                ]
+                if not leading:
+                    raise ValueError(
+                        f"no role may lead {t.value} in {catalogue.jurisdiction}"
+                    )
+                problem += (
+                    pulp.lpSum(leading) >= lead_floor * required,
+                    f"lead_{t.value}_{s}",
+                )
+
+        if REGISTERED_ROLE in roles:
+            problem += x[(REGISTERED_ROLE, s)] >= 1, f"rn_present_{s}"
+            if min_rn_share > 0:
+                rostered = pulp.lpSum(x[(r, s)] * length for r in roles)
+                problem += (
+                    x[(REGISTERED_ROLE, s)] * length >= min_rn_share * rostered,
+                    f"rn_floor_{s}",
+                )
 
     problem.solve(_solver())
     status = pulp.LpStatus[problem.status]
 
     headcount = {k: int(round(v.value() or 0)) for k, v in x.items()}
-    delivered = sum(
-        n * shifts[s] * ROLE_HOURS_CONTRIBUTION[r] for (r, s), n in headcount.items()
-    )
-    rn_delivered = sum(
-        n * shifts[s] for (r, s), n in headcount.items() if r == "sn"
-    )
-    pattern = ShiftPattern(
+    rostered_hours = sum(n * shifts[s] for (r, s), n in headcount.items())
+    rn_hours = sum(n * shifts[s] for (r, s), n in headcount.items()
+                   if r == REGISTERED_ROLE)
+    rn_share = (rn_hours / rostered_hours) if rostered_hours else 0.0
+
+    task_hours: dict[tuple[str, str], float] = {}
+    for (r, s, t), var in y.items():
+        value = var.value() or 0.0
+        if value > 1e-6:
+            key = (r, t.value)
+            task_hours[key] = task_hours.get(key, 0.0) + value
+
+    wb = assess(ShiftPattern(
         shift_hours=max(shifts.values()),
         weekly_hours=model.weekly_hours,
         night_share=1 / len(shifts),
-        rn_share=(rn_delivered / delivered) if delivered else 0,
-    )
-    wb = assess(pattern)
+        rn_share=rn_share,
+    ))
 
     return Establishment(
         headcount=headcount,
-        care_hours=delivered,
-        rn_share=(rn_delivered / delivered) if delivered else 0.0,
+        care_hours=rostered_hours,
+        rn_share=rn_share,
         daily_cost=sum(n * shifts[s] * costs[r] for (r, s), n in headcount.items()),
         status=status,
         wellbeing_score=wb.score,
         compliant=wb.compliant,
         breaches=tuple(wb.breaches),
+        task_hours=task_hours,
     )
 
 
@@ -171,21 +227,27 @@ def pareto_front(
     demand_hours: float,
     costs: dict[str, float] = None,
     rn_shares: tuple[float, ...] = None,
+    catalogue: RoleCatalogue = UK,
 ) -> list[Establishment]:
     """Exact Pareto front over cost and registered-nurse share.
 
-    Traced by the epsilon-constraint method: the skill-mix floor is stepped and
-    cost re-minimised at each step. Because each solve is exact, the resulting
-    front is exact — where NSGA-II would return an approximation of it.
+    Traced by the epsilon-constraint method: the RN floor is stepped and cost
+    re-minimised at each step. Because each solve is exact, the front is exact —
+    where NSGA-II would return an approximation.
 
     A weighted sum of cost and quality is deliberately not used: weighted sums
     cannot recover solutions on non-convex regions of a Pareto frontier no
     matter how the weights are tuned, so they silently drop valid plans.
+
+    The low-cost end of this front is now trustworthy in a way it was not
+    before: scope of practice, rather than an arbitrary floor, sets how lean the
+    mix can get.
     """
-    rn_shares = rn_shares or tuple(round(0.30 + 0.05 * i, 2) for i in range(13))
+    rn_shares = rn_shares or tuple(round(0.05 * i, 2) for i in range(19))
     front = []
     for share in rn_shares:
-        solution = solve(model, demand_hours, costs, min_rn_share=share)
+        solution = solve(model, demand_hours, costs, min_rn_share=share,
+                         catalogue=catalogue)
         if solution.status == "Optimal":
             front.append(solution)
     return _non_dominated(front)
@@ -194,9 +256,9 @@ def pareto_front(
 def _non_dominated(solutions: list[Establishment]) -> list[Establishment]:
     """Keep plans that nothing else beats on both cost and RN share.
 
-    Distinct skill-mix floors often bind to the same integer plan, so identical
-    points are collapsed first — otherwise the front reports the same staffing
-    twice and overstates how many real choices a reader has.
+    Distinct floors often bind to the same integer plan, so identical points are
+    collapsed first — otherwise the front reports the same staffing twice and
+    overstates how many real choices a reader has.
     """
     seen, unique = set(), []
     for s in solutions:
@@ -204,16 +266,15 @@ def _non_dominated(solutions: list[Establishment]) -> list[Establishment]:
         if key not in seen:
             seen.add(key)
             unique.append(s)
-    solutions = unique
 
     keep = []
-    for a in solutions:
+    for a in unique:
         dominated = any(
             b is not a
             and b.daily_cost <= a.daily_cost
             and b.rn_share >= a.rn_share
             and (b.daily_cost < a.daily_cost or b.rn_share > a.rn_share)
-            for b in solutions
+            for b in unique
         )
         if not dominated:
             keep.append(a)
@@ -248,6 +309,8 @@ def baseline_gate(
     min_rn_share: float = DEFAULT_MIN_RN_SHARE,
     evaluations: int = 4000,
     seed: int = 20260918,
+    catalogue: RoleCatalogue = UK,
+    task_profile: dict[Task, float] = None,
 ) -> BaselineResult:
     """Check the solver against blind search and hill-climbing with restarts.
 
@@ -256,54 +319,66 @@ def baseline_gate(
     tuning the optimiser hides that rather than fixing it.
     """
     costs = costs or DEFAULT_COSTS
-    roles = tuple(costs)
+    roles = tuple(k for k in catalogue.keys() if k in costs)
+    task_profile = task_profile or DEFAULT_TASK_PROFILE
     shifts = model.shifts
+    day_hours = sum(shifts.values())
+    demand_by_task = task_demand(demand_hours, task_profile)
     rng = random.Random(seed)
+
+    def shortfall(plan) -> float:
+        """Unmet task hours, greedily allocating the most restricted staff last.
+
+        A plan's feasibility is not a headcount total: hours only count toward a
+        task if the role holding them is allowed to do it.
+        """
+        total = 0.0
+        for s, length in shifts.items():
+            capacity = {r: plan.get((r, s), 0) * length for r in roles}
+            # Cover the most restricted tasks first, otherwise a generalist's
+            # hours get spent on work an assistant could have done.
+            ordered = sorted(
+                Task, key=lambda t: len([r for r in roles
+                                         if catalogue.roles[r].can_cover(t)])
+            )
+            for t in ordered:
+                required = demand_by_task[t] * (length / day_hours)
+                able = sorted(
+                    (r for r in roles if catalogue.roles[r].can_cover(t)),
+                    key=lambda r: -costs[r],
+                )
+                for r in able:
+                    if required <= 0:
+                        break
+                    used = min(capacity[r], required)
+                    capacity[r] -= used
+                    required -= used
+                total += max(0.0, required)
+            if plan.get((REGISTERED_ROLE, s), 0) < 1:
+                total += length
+        return total
 
     def evaluate(plan, penalise: bool = True) -> float:
         """Cost, with constraint violations priced in.
 
-        Infeasible plans must not simply return infinity. Almost every random
+        Infeasible plans must not simply return infinity: almost every random
         plan is infeasible, so a hard rejection leaves the hill-climber on a
-        flat landscape with nothing to climb — it then reports no solution at
-        all, and the gate passes vacuously because the solver beat nothing.
-        Pricing violations gives the search a gradient toward feasibility, so
-        the baseline is a real contest.
+        flat landscape with nothing to climb. It then reports no solution and
+        the gate passes vacuously, because the solver beat nothing.
         """
         cost = sum(n * shifts[s] * costs[r] for (r, s), n in plan.items())
-        violation = 0.0
-
-        for s in shifts:
-            share = shifts[s] / sum(shifts.values())
-            shift_hours = sum(n * shifts[t] for (r, t), n in plan.items() if t == s)
-            violation += max(0.0, share * demand_hours - shift_hours)
-            rn_hours = sum(
-                n * shifts[t] for (r, t), n in plan.items() if t == s and r == "sn"
-            )
-            violation += max(0.0, min_rn_share * shift_hours - rn_hours)
-            if plan.get(("sn", s), 0) < 1:
-                violation += shifts[s]
-
-        delivered = sum(n * shifts[s] for (r, s), n in plan.items())
-        violation += max(0.0, demand_hours - delivered)
-
+        unmet = shortfall(plan)
         if not penalise:
-            return math.inf if violation > 1e-9 else cost
-        # Penalty weight exceeds the dearest hour, so no violation can ever be
-        # bought more cheaply than it can be fixed.
-        return cost + violation * max(costs.values()) * 10
-
-    def true_cost(plan) -> float:
-        return evaluate(plan, penalise=False)
+            return math.inf if unmet > 1e-6 else cost
+        return cost + unmet * max(costs.values()) * 10
 
     def random_plan():
         return {(r, s): rng.randint(0, 12) for r in roles for s in shifts}
 
     best_random = math.inf
     for _ in range(evaluations):
-        best_random = min(best_random, true_cost(random_plan()))
+        best_random = min(best_random, evaluate(random_plan(), penalise=False))
 
-    # Hill climbing with random restarts, same evaluation budget.
     best_climb = math.inf
     restarts = 40
     per_restart = max(1, evaluations // restarts)
@@ -317,11 +392,12 @@ def baseline_gate(
             cost = evaluate(candidate)
             if cost <= current_cost:
                 current, current_cost = candidate, cost
-        # Score the climber on real cost, not on its penalised objective, so
-        # the comparison against the solver is like for like.
-        best_climb = min(best_climb, true_cost(current))
+        # Score on real cost, not the penalised objective, so the comparison
+        # against the solver is like for like.
+        best_climb = min(best_climb, evaluate(current, penalise=False))
 
-    solved = solve(model, demand_hours, costs, min_rn_share=min_rn_share)
+    solved = solve(model, demand_hours, costs, min_rn_share=min_rn_share,
+                   catalogue=catalogue, task_profile=task_profile)
     return BaselineResult(
         random_best=best_random,
         hill_climb_best=best_climb,

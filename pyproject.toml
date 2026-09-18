@@ -5,7 +5,9 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "staff-planner-app"
 version = "0.1.0"
-description = "Interactive workforce planning app comparing staffing models"
+description = "Acuity-driven nurse establishment planner"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = [
     "streamlit==1.57.0",
