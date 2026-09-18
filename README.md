@@ -1,16 +1,26 @@
 # Staff Planner App
 
-An interactive workforce planning application built with Python and Streamlit. 
-This app compares staffing models (Model A & Model B) and provides tools to analyze staff needs, overtime costs, and breakeven points.
+An acuity-driven nurse establishment planner built with Python and Streamlit.
+
+It answers one question: **does this staffing ratio actually meet the nursing
+demand this ward generates?** Demand comes from the Safer Nursing Care Tool
+acuity ladder — a Level 3 patient needs 6x the nursing time of a Level 0 — and
+is modelled as a distribution, not a point estimate, because census and case mix
+vary daily. Ratios are then tested against it rather than assumed adequate.
+
+Every clinical and regulatory constant carries a citation. See
+[research/SOURCES.md](research/SOURCES.md).
 
 ---
 
 ## 🛠️ Features
-- **Dynamic Input Parameters:** Modify costs, ratios, overtime, and more in real-time.
-- **Model Comparisons:** Analyze and compare total costs and staffing needs for Model A and Model B.
-- **Graphs and Visualizations:**
-  - Cost comparison between models.
-  - Breakeven analysis as `unit_census` changes.
+- **Acuity-driven demand** from the SNCT ladder (L0 4.35 → L3 26.2 HPPD).
+- **Stochastic modelling** — negative-binomial census and Dirichlet acuity mix;
+  establishment sized at the 90th percentile, per SNCT modelling findings.
+- **Ratio adequacy** — the gap between what a ratio buys and what acuity demands.
+- **Case-mix sensitivity** — where each model stops coping as CMI rises.
+- **Cited evidence store** — SQLite, queryable at runtime, with a generated
+  markdown view and a full retrieval log including failed lookups.
 
 ---
 
@@ -19,13 +29,19 @@ This app compares staffing models (Model A & Model B) and provides tools to anal
 staff-planner-app/
 │
 ├── app/
-│   ├── __init__.py         # Marks the app as a Python package (optional, can be empty).
-│   ├── planner.py          # Contains your shared final StaffPlanner class.
-│   ├── main.py             # The main Streamlit app.
-│   ├── styles.css          # Custom styles for the app.
+│   ├── __init__.py         # Marks the app as a Python package.
+│   ├── planner.py          # The StaffPlanner class (all business logic).
+│   ├── main.py             # The Streamlit app.
+│   ├── styles.css          # Custom styles, loaded by main.py.
 │
-├── requirements.txt        # Streamlit and other dependencies.
-├── README.md               # Documentation about the app.
+├── tests/
+│   └── test_planner.py     # Characterization tests for planner.py.
+│
+├── .streamlit/config.toml  # Theme settings.
+├── pyproject.toml          # Package metadata, pinned deps, pytest config.
+├── requirements.txt        # Pinned runtime dependencies.
+├── .gitignore
+├── README.md
 
 
 ---
@@ -37,9 +53,12 @@ staff-planner-app/
    git clone https://github.com/your-username/staff-planner-app.git
    cd staff-planner-app
 
-2. Install Dependencies: Use the provided requirements.txt file to install dependencies:
+2. Install Dependencies: install the project itself (this pulls in the pinned
+   dependencies and puts `app` on the import path):
 
-   pip install -r requirements.txt
+   pip install -e ".[dev]"
+
+   For a runtime-only install, `pip install -r requirements.txt` also works.
 
 3. Start the Streamlit App: Run the app using the streamlit CLI tool:
 
@@ -59,9 +78,28 @@ The app includes a styles.css file for custom styles (e.g., sidebar colors, font
 
 ## 🛡️ Testing
 
-Unit tests for planner.py can be added to tests/test_planner.py. Use the unittest module to ensure all calculations work as expected:
+Tests live in `tests/test_planner.py` and run with pytest:
 
-    python -m unittest discover -s tests
+    python -m pytest
+
+Tests marked `xfail` are **not** flaky — they document confirmed defects in the
+demand formula (see the note below) and describe the behaviour the planner
+should have. They will flip to passing when that formula is corrected.
+
+## ⚠️ Status
+
+**Mock data.** The machinery is tested and internally consistent, but no output
+is clinically valid until real census, CMI and acuity observations replace the
+defaults. Do not present results as staffing advice.
+
+Assumptions still needing local calibration are listed in the app's *Evidence
+and assumptions* panel and in [PROJECT_STATUS.md](PROJECT_STATUS.md): the
+CMI→acuity tilt, the base acuity mix, census dispersion and CMI variability.
+
+## 🔌 Local MCP config
+
+`.mcp.json` is gitignored — it holds machine-specific absolute paths. Copy
+`.mcp.json.example` and fill in your own.
 
 ---
 
