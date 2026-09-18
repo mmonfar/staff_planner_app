@@ -19,6 +19,11 @@ Every clinical and regulatory constant carries a citation. See
   establishment sized at the 90th percentile, per SNCT modelling findings.
 - **Ratio adequacy** — the gap between what a ratio buys and what acuity demands.
 - **Case-mix sensitivity** — where each model stops coping as CMI rises.
+- **Solved establishments** — a MILP finds the cheapest compliant staffing per
+  shift, so ratios are an output rather than an input, as NICE SG1 requires.
+- **Exact Pareto front** over cost and registered-nurse share, traced by the
+  epsilon-constraint method.
+- **Wellbeing index** from five studies, with EWTD breach flags.
 - **Cited evidence store** — SQLite, queryable at runtime, with a generated
   markdown view and a full retrieval log including failed lookups.
 

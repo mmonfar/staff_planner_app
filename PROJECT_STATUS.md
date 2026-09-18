@@ -2,7 +2,7 @@
 
 Maintained by the orchestrator session. Update on every completed task.
 
-**Completion: 15 / 20 (75%). Demand acuity-driven; wellbeing measured.**
+**Completion: 18 / 21 (86%). Ratios are now an output, not an input.**
 
 ## The problem (restated 2026-09-18)
 
@@ -61,6 +61,10 @@ being tractable. Aggregate mix = MILP. Individual roster = metaheuristic.
 | 19 | **Absence uplift** | annual leave and unplanned absence modelled separately; implied uplift 1.147 reported against the 1.46 benchmark |
 | 20 | **Stochastic demand** | `app/stochastic.py` — NB census, Dirichlet acuity mix, p90 policy, analytic baseline gate |
 | 12 | **Acuity baseline** | `app/acuity.py` — SNCT ladder L0 4.35 → L3 26.2 HPPD (6.0x); CMI tilts the mix, ladder converts to hours |
+| 23 | **Absence feedback wired** | understaffing raises sickness, which raises the establishment; `absence_is_endogenous` on by default |
+| 15 | **Baseline gate** | `app/optimise.py` — random 271.2, hill-climb 231.6, MILP 206.4 on Model A |
+| 16 | **MILP solver** | CBC via PuLP; per-shift coverage AND per-shift skill-mix floor; wellbeing carried through |
+| 17 | **Exact Pareto front** | epsilon-constraint over the skill-mix floor; deduplicated, non-dominated |
 | 13 | **Wellbeing index** | `app/wellbeing.py` — 5 studies, 17 sourced parameters; EWTD breach flags; endogenous absence loop |
 | 21 | **UI rebuilt** | ratio-vs-demand verdict, demand distribution, acuity mix, case-mix sweep, evidence panel |
 | 22 | **Uplift resolved** | sourced 22% (SNCT), single total, no double-count with `vacation_days` |
@@ -69,9 +73,7 @@ being tractable. Aggregate mix = MILP. Individual roster = metaheuristic.
 | # | Task | Blocks | P |
 |---|---|---|---|
 | 21 | **Surface stochasticity in the UI** — the app still shows single numbers; p90 band, shortfall risk and gate status are computed but not displayed | — | P0 |
-| 16 | **MILP solver** — PuLP/OR-Tools, coverage + skill-mix + OT as hard constraints | 17 | P1 |
-| 17 | **Epsilon-constraint sweep** -> exact Pareto front; 3-way cost/quality/wellbeing explorer in the UI | — | P1 |
-| 15 | Baseline gate — Random Search + Hill-Climbing-w/-Restarts, equal budget | 16, 17 | P1 |
+| 24 | **Surface the optimiser in the UI** — solver and Pareto front are model-side only; the app still shows ratio-vs-demand, not the solved establishment | — | P0 |
 | 9 | LICENSE (needs owner's choice) | — | P2 |
 | 10 | CI — pytest on push | — | P2 |
 | 11 | MCP config: pin interpreter, drop duplicate defs (cross-repo) | — | P2 |
@@ -105,6 +107,10 @@ tasks needing domain input, not code. Then 16, gated by 15. Then 17.
 - **RETRACTED: "CMI is a weak lever."** That came from a curve fitted inside one
   surgical specialty, where restricted acuity range attenuates the slope. The
   SNCT ladder spans 6.0x. Acuity is the dominant driver.
+- **All roles contribute equally to care hours** (`ROLE_HOURS_CONTRIBUTION` is
+  1.0 across SN/PN/HCA), so only the skill-mix floor distinguishes grades. Real
+  scopes of practice differ — some care can only be delivered by a registered
+  nurse. Needs a clinical view before the front is trusted at low RN shares.
 - **Assumptions still needing local data:** `census_dispersion` 1.6,
   `cmi_sd` 0.15, `mix_concentration` 40, `cmi_tilt` 1.0, and `DEFAULT_BASE_MIX`.
   The tilt and base mix matter most — they set how CMI maps onto the ladder.

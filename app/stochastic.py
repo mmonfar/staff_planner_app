@@ -32,6 +32,7 @@ from app.acuity import (
     mix_from_cmi,
 )
 from app.planner import DAYS_PER_YEAR, Model, StaffPlanner
+from app.wellbeing import ShiftPattern, absence_feedback
 
 CMI_REFERENCE = 1.0
 
@@ -124,6 +125,7 @@ class StochasticPlanner:
     mix_concentration: float = DEFAULT_MIX_CONCENTRATION
     ladder: dict = None
     unplanned_absence_rate: float = 0.05
+    absence_is_endogenous: bool = True
     vacation_days: int = 30
     costs: dict[str, float] | None = None
     seed: int = 20260918
@@ -206,10 +208,28 @@ class StochasticPlanner:
 
         target = dist.percentile(policy)
         fte = math.ceil(target * DAYS_PER_YEAR / fte_hours)
+        ratio_hours = self.ratio_capacity_hours(model)
 
-        # Unplanned absence erodes the roster on the day; the establishment has
-        # to carry it on top of the demand percentile.
-        fte_with_absence = math.ceil(fte / (1 - self.unplanned_absence_rate))
+        # Unplanned absence erodes the roster on the day, so the establishment
+        # carries it on top of the demand percentile.
+        #
+        # Absence is not a fixed input. Understaffing raises sickness absence,
+        # which deepens the understaffing (dallora-2025-jamanetwopen), so a plan
+        # that looks marginally adequate on paper degrades in service. The
+        # shortfall a ratio-based roster is already running is fed back into the
+        # absence rate before the establishment is sized.
+        effective_absence = self.unplanned_absence_rate
+        if self.absence_is_endogenous:
+            shortfall = max(0.0, (target - ratio_hours) / target)
+            effective_absence = absence_feedback(
+                self.unplanned_absence_rate, shortfall,
+                ShiftPattern(
+                    shift_hours=max(model.shifts.values()),
+                    weekly_hours=model.weekly_hours,
+                    night_share=1 / len(model.shifts),
+                ),
+            )
+        fte_with_absence = math.ceil(fte / (1 - effective_absence))
 
         # The SNCT band describes AVERAGE ward staffing requirements, so the
         # band check runs against mean HPPD. Establishment HPPD sits above it by
@@ -217,7 +237,6 @@ class StochasticPlanner:
         # reported separately rather than measured against a mean-based band.
         hppd_mean = dist.mean / self.mean_census
         hppd_target = target / self.mean_census
-        ratio_hours = self.ratio_capacity_hours(model)
         low, high = HPPD_SANITY_BAND
 
         analytic = dist.analytic_p90()
@@ -241,6 +260,8 @@ class StochasticPlanner:
             "ratio_capacity_hours": ratio_hours,
             "ratio_meets_p90_demand": ratio_hours >= target,
             "ratio_gap_hours": ratio_hours - target,
+            "absence_rate_used": effective_absence,
+            "absence_rate_base": self.unplanned_absence_rate,
         }
 
     def shortfall_risk(self, model: Model, rostered: int, days: int = 10_000) -> float:
