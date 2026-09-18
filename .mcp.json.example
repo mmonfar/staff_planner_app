@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "refs-books-brain": {
+      "command": "/absolute/path/to/your/python",
+      "args": ["/absolute/path/to/refs_books/_system/mcp_server.py"]
+    }
+  }
+}

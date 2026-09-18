@@ -1,0 +1,31 @@
+[build-system]
+# >=77 for PEP 639 license expressions (`license = "Apache-2.0"` + license-files).
+# Older setuptools rejects that syntax, which would fail CI on a clean runner.
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "staff-planner-app"
+version = "0.1.0"
+description = "Acuity-driven nurse establishment planner"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+dependencies = [
+    "streamlit==1.57.0",
+    "matplotlib==3.11.1",
+    "pandas==3.0.5",
+    "pulp==3.3.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.setuptools]
+packages = ["app"]
+
+[tool.setuptools.package-data]
+app = ["styles.css"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
