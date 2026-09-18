@@ -2,7 +2,7 @@
 
 Maintained by the orchestrator session. Update on every completed task.
 
-**Completion: 13 / 20 (65%). Demand is acuity-driven and stochastic.**
+**Completion: 15 / 20 (75%). Demand acuity-driven; wellbeing measured.**
 
 ## The problem (restated 2026-09-18)
 
@@ -61,14 +61,14 @@ being tractable. Aggregate mix = MILP. Individual roster = metaheuristic.
 | 19 | **Absence uplift** | annual leave and unplanned absence modelled separately; implied uplift 1.147 reported against the 1.46 benchmark |
 | 20 | **Stochastic demand** | `app/stochastic.py` — NB census, Dirichlet acuity mix, p90 policy, analytic baseline gate |
 | 12 | **Acuity baseline** | `app/acuity.py` — SNCT ladder L0 4.35 → L3 26.2 HPPD (6.0x); CMI tilts the mix, ladder converts to hours |
+| 13 | **Wellbeing index** | `app/wellbeing.py` — 5 studies, 17 sourced parameters; EWTD breach flags; endogenous absence loop |
+| 21 | **UI rebuilt** | ratio-vs-demand verdict, demand distribution, acuity mix, case-mix sweep, evidence panel |
 | 22 | **Uplift resolved** | sourced 22% (SNCT), single total, no double-count with `vacation_days` |
 
 ## Pending
 | # | Task | Blocks | P |
 |---|---|---|---|
 | 21 | **Surface stochasticity in the UI** — the app still shows single numbers; p90 band, shortfall risk and gate status are computed but not displayed | — | P0 |
-| 13 | **Wellbeing index** — OT/nurse, consecutive nights, shift-length fatigue, load-when-short | 16, 17 | P1 |
-| 13 | **Wellbeing index** — OT/nurse, consecutive nights, shift-length fatigue, load-when-short | 16, 17 | P1 |
 | 16 | **MILP solver** — PuLP/OR-Tools, coverage + skill-mix + OT as hard constraints | 17 | P1 |
 | 17 | **Epsilon-constraint sweep** -> exact Pareto front; 3-way cost/quality/wellbeing explorer in the UI | — | P1 |
 | 15 | Baseline gate — Random Search + Hill-Climbing-w/-Restarts, equal budget | 16, 17 | P1 |
@@ -82,6 +82,18 @@ being tractable. Aggregate mix = MILP. Individual roster = metaheuristic.
 inconsistent). 8 verifies. Then 12 and 13 in parallel — both are modelling
 tasks needing domain input, not code. Then 16, gated by 15. Then 17.
 9, 10, 11 independent, any time. 14 stays on HOLD until 16 reports.
+
+## Wellbeing findings that change the model
+- **Absence is endogenous.** Understaffing raises sickness absence, which
+  worsens understaffing (dallora-2025). `unplanned_absence` is still an
+  exogenous input to `StochasticPlanner`; `wellbeing.absence_feedback()` exists
+  but is not yet wired into establishment sizing. **Task 23, P1.**
+- **Model B breaches the EWTD night-work default** and scores 79.9/100 against
+  Model A's 100. Cheaper in money is not cheaper overall.
+- **Cost and wellbeing are not purely opposed.** A richer RN mix lowers sickness
+  absence (OR 0.98 per +10% RN hours), so it buys back part of its own cost.
+  This matters for the Pareto front — the two objectives are not a clean
+  trade-off everywhere.
 
 ## Open modelling questions
 - **Neither ratio meets acuity-driven demand at p90 once CMI rises.** Model A is
