@@ -2,7 +2,7 @@
 
 Maintained by the orchestrator session. Update on every completed task.
 
-**Completion: 18 / 21 (86%). Ratios are now an output, not an input.**
+**Completion: 20 / 22 (91%). Solved, surfaced and auditable.**
 
 ## The problem (restated 2026-09-18)
 
@@ -61,6 +61,8 @@ being tractable. Aggregate mix = MILP. Individual roster = metaheuristic.
 | 19 | **Absence uplift** | annual leave and unplanned absence modelled separately; implied uplift 1.147 reported against the 1.46 benchmark |
 | 20 | **Stochastic demand** | `app/stochastic.py` — NB census, Dirichlet acuity mix, p90 policy, analytic baseline gate |
 | 12 | **Acuity baseline** | `app/acuity.py` — SNCT ladder L0 4.35 → L3 26.2 HPPD (6.0x); CMI tilts the mix, ladder converts to hours |
+| 24 | **Optimiser surfaced in UI** | solved plan per shift, baseline-gate status, Pareto front chart + table, decision recorder |
+| 25 | **Decision audit trail** | `app/audit.py` + `research/planning_log.db` — scenario, plan, gate status, evidence fingerprint, rationale, supersession |
 | 23 | **Absence feedback wired** | understaffing raises sickness, which raises the establishment; `absence_is_endogenous` on by default |
 | 15 | **Baseline gate** | `app/optimise.py` — random 271.2, hill-climb 231.6, MILP 206.4 on Model A |
 | 16 | **MILP solver** | CBC via PuLP; per-shift coverage AND per-shift skill-mix floor; wellbeing carried through |
@@ -73,7 +75,6 @@ being tractable. Aggregate mix = MILP. Individual roster = metaheuristic.
 | # | Task | Blocks | P |
 |---|---|---|---|
 | 21 | **Surface stochasticity in the UI** — the app still shows single numbers; p90 band, shortfall risk and gate status are computed but not displayed | — | P0 |
-| 24 | **Surface the optimiser in the UI** — solver and Pareto front are model-side only; the app still shows ratio-vs-demand, not the solved establishment | — | P0 |
 | 9 | LICENSE (needs owner's choice) | — | P2 |
 | 10 | CI — pytest on push | — | P2 |
 | 11 | MCP config: pin interpreter, drop duplicate defs (cross-repo) | — | P2 |
@@ -131,6 +132,15 @@ tasks needing domain input, not code. Then 16, gated by 15. Then 17.
   broken — fix that, do not tune the method.
 - No weighted "safety-adjusted cost" scalar. Weighted sums cannot recover
   solutions on non-convex regions of the Pareto frontier.
+
+## Two records, two purposes
+- `research/evidence.db` — what the literature says. Committed; regenerable.
+- `research/planning_log.db` — what this app recommended, on what inputs, under
+  which evidence version. **Gitignored**: operational, per-deployment, and may
+  carry names. Each run stores an evidence fingerprint, so if a multiplier later
+  changes, past decisions surface as stale rather than silently wrong.
+- Method decisions (why MILP, why acuity-driven) live in the refs-books brain
+  ledger — 3 entries for this project, cross-project by design.
 
 ## Evidence rules
 Every clinical or regulatory constant used by the model must resolve through

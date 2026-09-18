@@ -18,6 +18,14 @@ import pandas as pd
 import streamlit as st
 
 from app.acuity import DEFAULT_BASE_MIX, LEVELS, SNCT_GENERAL_WARD, mix_from_cmi
+from app.audit import evidence_fingerprint, history, log_run
+from app.optimise import (
+    DEFAULT_MIN_RN_SHARE,
+    annual_cost,
+    baseline_gate,
+    pareto_front,
+    solve,
+)
 from app.planner import (
     MODEL_A_SHIFTS,
     MODEL_B_SHIFTS,
@@ -257,6 +265,192 @@ st.caption(
     "crosses a dotted one, that model stops meeting demand — this is the "
     "breakeven that matters, not the cost crossover."
 )
+
+# --- solved establishment ----------------------------------------------------
+
+st.subheader("What should we actually staff?")
+st.caption(
+    "Ratios above are tested, not trusted. Here they are solved for: the "
+    "cheapest headcount per shift that meets demand at the required skill mix. "
+    "NICE SG1 requires each ward to set its own establishment rather than apply "
+    "a universal ratio."
+)
+
+min_rn = st.slider(
+    "Minimum registered-nurse share of care hours", 0.30, 0.90,
+    DEFAULT_MIN_RN_SHARE, 0.05,
+    help="Enforced on every shift, not as a daily average. Averages let a "
+         "solver stack nurses onto days and leave the night bare.",
+)
+
+
+@st.cache_data(show_spinner="Solving...")
+def solve_cached(shifts, weekly_hours, ratios, demand, costs_items, min_rn_share):
+    model = Model("m", dict(shifts), weekly_hours, dict(ratios))
+    return solve(model, demand, dict(costs_items), min_rn_share=min_rn_share)
+
+
+@st.cache_data(show_spinner="Checking against baselines...")
+def gate_cached(shifts, weekly_hours, ratios, demand, costs_items, min_rn_share):
+    model = Model("m", dict(shifts), weekly_hours, dict(ratios))
+    return baseline_gate(model, demand, dict(costs_items),
+                         min_rn_share=min_rn_share, evaluations=2500)
+
+
+@st.cache_data(show_spinner="Tracing the Pareto front...")
+def front_cached(shifts, weekly_hours, ratios, demand, costs_items):
+    model = Model("m", dict(shifts), weekly_hours, dict(ratios))
+    return pareto_front(model, demand, dict(costs_items))
+
+
+cost_items = tuple(costs.items())
+demand_target = res_a["demand_target"]
+solved = {}
+for label, model, weekly in (("Model A", MODEL_A, 40), ("Model B", MODEL_B, 48)):
+    solved[label] = solve_cached(
+        tuple(model.shifts.items()), weekly, tuple(model.ratios.items()),
+        demand_target, cost_items, min_rn,
+    )
+
+sol_cols = st.columns(2)
+for col, (label, model) in zip(sol_cols, (("Model A", MODEL_A), ("Model B", MODEL_B))):
+    e = solved[label]
+    with col:
+        st.markdown(f"**{label}** - {e.status}")
+        if e.status != "Optimal":
+            st.error("No feasible plan at this demand and skill-mix floor.")
+            continue
+        st.dataframe(
+            pd.DataFrame([{"shift": s, **e.on_shift(s)} for s in model.shifts]).fillna(0),
+            hide_index=True, use_container_width=True,
+        )
+        m = st.columns(3)
+        m[0].metric("Cost/day", f"{e.daily_cost:.1f}")
+        m[1].metric("RN share", f"{e.rn_share:.0%}")
+        m[2].metric("Wellbeing", f"{e.wellbeing_score:.0f}/100")
+        if e.compliant:
+            st.success("Compliant with working-time limits")
+        else:
+            for b in e.breaches:
+                st.error(b)
+
+gate = gate_cached(tuple(MODEL_A.shifts.items()), 40, tuple(MODEL_A.ratios.items()),
+                   demand_target, cost_items, min_rn)
+if gate.passed:
+    st.caption(
+        f"Baseline gate passed - random search {gate.random_best:.1f}, "
+        f"hill-climbing {gate.hill_climb_best:.1f}, solver {gate.solver:.1f}. "
+        "A solver that cannot beat blind sampling has a broken objective, not a "
+        "tuning problem."
+    )
+else:
+    st.error(
+        f"Baseline gate FAILED - random {gate.random_best:.1f}, hill-climb "
+        f"{gate.hill_climb_best:.1f}, solver {gate.solver:.1f}. Do not use this "
+        "result: the objective or the encoding is wrong."
+    )
+
+# --- Pareto front ------------------------------------------------------------
+
+st.subheader("Cost against skill mix")
+front = front_cached(tuple(MODEL_A.shifts.items()), 40,
+                     tuple(MODEL_A.ratios.items()), demand_target, cost_items)
+if front:
+    fcol, tcol = st.columns([3, 2])
+    with fcol:
+        fig, ax = plt.subplots(figsize=(7, 3.6))
+        xs = [e.rn_share * 100 for e in front]
+        ys = [annual_cost(e) for e in front]
+        ax.plot(xs, ys, color=INK, lw=1.2, marker="o", markersize=5,
+                markerfacecolor=TEAL, markeredgecolor=TEAL)
+        chosen = min(front, key=lambda e: abs(e.rn_share - min_rn))
+        ax.plot(chosen.rn_share * 100, annual_cost(chosen), marker="o",
+                markersize=11, markerfacecolor="none", markeredgecolor=RED, mew=2)
+        ax.set_xlabel("Registered-nurse share of care hours (%)", fontsize=8)
+        ax.set_ylabel("Annual cost (relative units)", fontsize=8)
+        ax.tick_params(labelsize=7)
+        ax.spines[["top", "right"]].set_visible(False)
+        plt.tight_layout()
+        st.pyplot(fig)
+        plt.close(fig)
+    with tcol:
+        st.dataframe(
+            pd.DataFrame([{"RN share": f"{e.rn_share:.0%}",
+                           "Cost/day": round(e.daily_cost, 1),
+                           "Annual": round(annual_cost(e))} for e in front]),
+            hide_index=True, use_container_width=True, height=260,
+        )
+    st.caption(
+        "Every point is a proven optimum, so this front is **exact** - NSGA-II "
+        "would return an approximation of it. No weighted safety-adjusted cost "
+        "is used: weighted sums cannot recover solutions on non-convex regions "
+        "of a frontier, so they silently drop valid plans. Which point to buy "
+        "is a judgement, not a calculation."
+    )
+
+# --- decision record ---------------------------------------------------------
+
+st.subheader("Record this decision")
+st.caption(
+    "The evidence store records what the literature says; this records what was "
+    "actually decided, on which inputs, under which version of the evidence. If "
+    "a multiplier later changes, past decisions show as stale rather than "
+    "silently wrong."
+)
+
+rec_a, rec_b = st.columns([2, 1])
+with rec_a:
+    note = st.text_area(
+        "Why this plan?",
+        placeholder="e.g. chose the 64% RN point over 55% for night cover "
+                    "despite the cost; agreed with the DoN on 18 Sep.",
+        height=80,
+    )
+    who = st.text_input("Decided by", placeholder="name or role")
+with rec_b:
+    which = st.selectbox("Plan", ["Model A", "Model B"])
+    st.caption(f"Evidence version `{evidence_fingerprint()}`")
+    if st.button("Record decision", type="primary", use_container_width=True):
+        chosen_plan = solved[which]
+        if chosen_plan.status != "Optimal":
+            st.error("Cannot record an infeasible plan.")
+        else:
+            logged = log_run(
+                chosen_plan, which,
+                scenario={
+                    "beds": beds, "mean_census": mean_census, "mean_cmi": mean_cmi,
+                    "cmi_sd": cmi_sd, "dispersion": dispersion, "cmi_tilt": cmi_tilt,
+                    "policy": policy, "uplift": uplift, "min_rn_share": min_rn,
+                    "costs": costs,
+                },
+                demand_target=demand_target, policy=policy,
+                baseline_gate_passed=gate.passed,
+                rationale=note or None, author=who or None,
+            )
+            st.success(f"Recorded as run #{logged.run_id} under evidence "
+                       f"`{logged.fingerprint}`.")
+
+past = history(limit=10)
+if past:
+    with st.expander(f"Decision history ({len(past)} most recent)"):
+        st.dataframe(
+            pd.DataFrame([{
+                "#": r["id"], "when": r["ran_at"], "model": r["model"],
+                "cost/day": round(r["daily_cost"], 1),
+                "RN": f"{r['rn_share']:.0%}",
+                "compliant": "yes" if r["compliant"] else "NO",
+                "evidence": r["evidence_fingerprint"],
+                "stale": "STALE" if r["stale"] else "",
+                "superseded by": r["superseded_by"] or "",
+            } for r in past]),
+            hide_index=True, use_container_width=True,
+        )
+        if any(r["stale"] for r in past):
+            st.warning(
+                "Some decisions were made under evidence that has since changed. "
+                "They are not necessarily wrong, but they were decided on "
+                "different numbers - re-run before relying on them."
+            )
 
 # --- provenance --------------------------------------------------------------
 

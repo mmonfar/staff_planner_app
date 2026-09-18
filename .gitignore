@@ -29,3 +29,6 @@ Thumbs.db
 
 # Local MCP config — machine-specific absolute paths, not for sharing
 .mcp.json
+
+# Operational audit trail — generated per deployment, not shared
+research/planning_log.db
