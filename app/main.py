@@ -17,6 +17,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
 
+from mmonfar_brand import matplotlib as mmmpl
+from mmonfar_brand import streamlit as mmst
+from mmonfar_brand import tokens as brand_tokens
+
 from app.acuity import DEFAULT_BASE_MIX, LEVELS, SNCT_GENERAL_WARD, mix_from_cmi
 from app.audit import evidence_fingerprint, history, log_run
 from app.optimise import (
@@ -36,16 +40,18 @@ from app.planner import (
 )
 from app.stochastic import HPPD_SANITY_BAND, StochasticPlanner
 
-INK = "#494645"
-TEAL = "#0f7d7d"
+# Palette from the canonical mmonfar. tokens (brand-identity is the single
+# source of truth -- see brand-identity/ADOPTION.md). AMBER and RED are not
+# brand colours (the identity deliberately has only one accent); they are
+# this app's own semantic states for "caution" / "short of demand" and are
+# kept local on purpose.
+INK = brand_tokens.CANVAS
+TEAL = brand_tokens.TEAL
 AMBER = "#c98a1b"
 RED = "#b3402f"
 
-st.set_page_config(layout="wide", page_title="Staff Planner", page_icon="📊")
-
-_css = Path(__file__).with_name("styles.css")
-if _css.exists():
-    st.markdown(f"<style>{_css.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
+mmst.apply(st, page_title="Staff Planner", page_icon="📊")
+mmmpl.apply()
 
 st.title("📊 Staff Planner")
 st.caption(

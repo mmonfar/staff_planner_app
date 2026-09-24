@@ -11,11 +11,15 @@ description = "Acuity-driven nurse establishment planner"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 requires-python = ">=3.11"
+# mmonfar-brand is not on PyPI; it is a sibling repo in this monorepo layout
+# (Python_Projects/brand-identity), the single source of truth for the
+# identity. Install it first: `pip install -e ../brand-identity[streamlit,matplotlib]`.
 dependencies = [
     "streamlit==1.57.0",
     "matplotlib==3.11.1",
     "pandas==3.0.5",
     "pulp==3.3.2",
+    "mmonfar-brand",
 ]
 
 [project.optional-dependencies]
@@ -23,9 +27,6 @@ dev = ["pytest>=8"]
 
 [tool.setuptools]
 packages = ["app"]
-
-[tool.setuptools.package-data]
-app = ["styles.css"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
