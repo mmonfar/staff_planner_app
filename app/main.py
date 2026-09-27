@@ -527,5 +527,6 @@ acuity observations replace these defaults. Do not present as staffing advice.
 st.caption(
     "Research and demonstration software. Not a medical device and not intended for "
     "clinical decision-making, diagnosis or treatment. Provided \"as is\", without warranty "
-    "of any kind; the author accepts no liability for any use. Uses synthetic data only."
+    "of any kind; the author accepts no liability for any use. Uses synthetic data only. "
+    "Personal project · not affiliated with any employer · synthetic data only."
 )
