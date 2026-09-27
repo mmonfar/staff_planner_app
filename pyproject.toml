@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 name = "staff-planner-app"
 version = "0.1.0"
 description = "Acuity-driven nurse establishment planner"
-license = "Apache-2.0"
+license = "AGPL-3.0-or-later"
 license-files = ["LICENSE"]
 requires-python = ">=3.11"
 # mmonfar-brand is not on PyPI; it is a sibling repo in this monorepo layout
