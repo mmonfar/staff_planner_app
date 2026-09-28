@@ -1,0 +1,319 @@
+{
+  "$schema": "https://mmonfar.brand/tokens/v1",
+  "name": "mmonfar. brand tokens",
+  "version": "1.1.0",
+  "updated": "2026-09-28",
+  "owner": "Martin Monteagudo Farina",
+  "description": "Single source of truth for the mmonfar. identity. Two typefaces, four colours, one accent. Every additional hue derives from teal. Consume the `tokens` block for design tools and code; the `microsoft` block carries ready-made Power BI, Office and Fluent mappings.",
+
+  "tokens": {
+    "color": {
+      "core": {
+        "canvas": { "value": "#17242B", "name": "Deep slate", "role": "Primary dark ground. Hero, cards, video, business-card front." },
+        "cream": { "value": "#FDFBF7", "name": "Warm cream", "role": "Primary light ground and ink on dark." },
+        "teal": { "value": "#008080", "name": "Teal", "role": "The only accent. Rules, dots, labels, links, data lines." },
+        "tealBright": { "value": "#00A3A3", "name": "Teal bright", "role": "Hover and glow only. Never a fill at rest." }
+      },
+      "surface": {
+        "canvasRaised": { "value": "#1E2A32", "role": "Raised panel on dark ground." },
+        "sectionAlt": { "value": "#FDFBF7", "role": "Alternating light section on a dark page." },
+        "cardWhite": { "value": "#FFFFFF", "role": "Raised panel on light ground only." }
+      },
+      "ink": {
+        "onDark": {
+          "primary": { "value": "#FDFBF7", "alpha": 1.0 },
+          "secondary": { "value": "rgba(253,251,247,0.70)", "hex": "#B9BEC0", "alpha": 0.7 },
+          "tertiary": { "value": "rgba(253,251,247,0.45)", "hex": "#87908F", "alpha": 0.45 },
+          "quaternary": { "value": "rgba(253,251,247,0.30)", "hex": "#6C7576", "alpha": 0.3 }
+        },
+        "onLight": {
+          "primary": { "value": "#17242B", "alpha": 1.0 },
+          "secondary": { "value": "rgba(23,36,43,0.62)", "hex": "#6E7B80", "alpha": 0.62 },
+          "tertiary": { "value": "rgba(23,36,43,0.32)", "hex": "#B3BABD", "alpha": 0.32 },
+          "quaternary": { "value": "rgba(23,36,43,0.11)", "hex": "#E3E5E4", "alpha": 0.11 }
+        }
+      },
+      "rule": {
+        "onDarkHairline": { "value": "rgba(253,251,247,0.10)", "hex": "#2D383E" },
+        "onDarkMedium": { "value": "rgba(253,251,247,0.18)", "hex": "#3C464B" },
+        "onLightHairline": { "value": "rgba(23,36,43,0.11)", "hex": "#E3E5E4" },
+        "onLightMedium": { "value": "rgba(23,36,43,0.20)", "hex": "#D3D7D8" }
+      },
+      "cascade": {
+        "description": "The teal block cascade. Stated as opacities of teal; solid equivalents are pre-flattened for systems that cannot carry alpha (PowerPoint shapes, print separations, Power BI data colours).",
+        "steps": [
+          { "step": 1, "alpha": 1.0, "onDark": "#008080", "onLight": "#008080" },
+          { "step": 2, "alpha": 0.62, "onDark": "#095D60", "onLight": "#60AFAD" },
+          { "step": 3, "alpha": 0.46, "onDark": "#0C4E52", "onLight": "#89C2C0" },
+          { "step": 4, "alpha": 0.32, "onDark": "#104146", "onLight": "#ACD4D1" },
+          { "step": 5, "alpha": 0.26, "onDark": "#113C41", "onLight": "#BBDBD8" },
+          { "step": 6, "alpha": 0.10, "onDark": "#152D33", "onLight": "#E4EFEB" }
+        ]
+      },
+      "data": {
+        "description": "Chart and figure encoding. Sequential from the cascade; no categorical rainbow.",
+        "series": ["#008080", "#00A3A3", "#60AFAD", "#89C2C0", "#ACD4D1", "#BBDBD8"],
+        "median": "#008080",
+        "band": "rgba(0,128,128,0.16)",
+        "trace": "rgba(0,128,128,0.42)",
+        "gridOnDark": "rgba(253,251,247,0.07)",
+        "gridOnLight": "rgba(23,36,43,0.07)",
+        "threshold": { "value": "rgba(23,36,43,0.34)", "onDark": "rgba(253,251,247,0.34)", "dash": "5 5" }
+      },
+      "state": {
+        "focusRing": { "value": "#008080", "width": "2px", "offset": "3px" },
+        "selectionBg": "#008080",
+        "selectionInk": "#FDFBF7",
+        "linkRest": "#008080",
+        "linkHover": "#00A3A3",
+        "tealWash": "rgba(0,128,128,0.09)"
+      },
+      "rules": [
+        "Four colours total. Anything else must be an opacity of teal.",
+        "No gradients as decoration. Gradients only as a legibility scrim over media.",
+        "Teal is never a large background field. It is a mark, a rule, a line.",
+        "Maximum two background colours in any one artefact."
+      ]
+    },
+
+    "typography": {
+      "families": {
+        "display": {
+          "stack": "'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif",
+          "primary": "Plus Jakarta Sans",
+          "officeFallback": "Segoe UI Semibold",
+          "weights": [500, 600, 700, 800],
+          "role": "Wordmark, headlines, body copy, names."
+        },
+        "label": {
+          "stack": "'Space Grotesk', 'Segoe UI', system-ui, sans-serif",
+          "primary": "Space Grotesk",
+          "officeFallback": "Segoe UI",
+          "weights": [400, 500, 700],
+          "role": "Every uppercase label, eyebrow, credential row, axis tick, data value, table header."
+        },
+        "retired": ["JetBrains Mono — no monospace anywhere unless literally displaying code."]
+      },
+      "scale": {
+        "wordmark":   { "family": "display", "weight": 800, "size": "124px", "letterSpacing": "-0.05em", "lineHeight": 0.84 },
+        "display":    { "family": "display", "weight": 800, "size": "clamp(2.9rem, 5.4vw, 4.5rem)", "letterSpacing": "-0.045em", "lineHeight": 0.94 },
+        "h1":         { "family": "display", "weight": 800, "size": "60px", "letterSpacing": "-0.04em", "lineHeight": 1.0 },
+        "h2":         { "family": "display", "weight": 800, "size": "34px", "letterSpacing": "-0.03em", "lineHeight": 1.12 },
+        "h3":         { "family": "display", "weight": 800, "size": "24px", "letterSpacing": "-0.03em", "lineHeight": 1.1 },
+        "leadBody":   { "family": "display", "weight": 500, "size": "19px", "letterSpacing": "0", "lineHeight": 1.6 },
+        "body":       { "family": "display", "weight": 500, "size": "16px", "letterSpacing": "0", "lineHeight": 1.75 },
+        "bodySmall":  { "family": "display", "weight": 500, "size": "15px", "letterSpacing": "0", "lineHeight": 1.6 },
+        "label":      { "family": "label", "weight": 500, "size": "13px", "letterSpacing": "0.18em", "case": "uppercase" },
+        "labelSmall": { "family": "label", "weight": 700, "size": "12px", "letterSpacing": "0.20em", "case": "uppercase" },
+        "tick":       { "family": "label", "weight": 400, "size": "11px", "letterSpacing": "0.10em", "case": "uppercase" },
+        "credential": { "family": "label", "weight": 500, "size": "19px", "letterSpacing": "0.14em", "case": "uppercase" }
+      },
+      "minimums": {
+        "slide1920x1080": "24px absolute floor, 32px preferred for body",
+        "print": "12pt",
+        "touchTarget": "44px"
+      },
+      "rules": [
+        "Display face never uppercase. Label face always uppercase.",
+        "Letter-spacing is negative on display, positive on label. Never the reverse.",
+        "text-wrap: balance on headings, pretty on body."
+      ]
+    },
+
+    "wordmark": {
+      "text": "mmonfar",
+      "dot": {
+        "shape": "square",
+        "sizeRatio": 0.11,
+        "minSizePx": 2,
+        "note": "Side = max(0.11 × wordmark cap size, 2px) — about 15% of cap height (CEO decision 2026-09-28, resolves CONFLICTS #1). Baseline-aligned, never a typographic period.",
+        "color": "#008080",
+        "gapRatio": 0.016
+      },
+      "clearSpace": "One wordmark x-height on all four sides. Nothing enters it.",
+      "minWidth": { "screen": "88px", "print": "24mm" },
+      "lockups": ["Wordmark alone", "Wordmark + teal rule + uppercase descriptor", "Wordmark + name + credential row"],
+      "never": ["Outline", "Drop shadow", "Rotate", "Stretch", "Recolour the dot", "Round the dot"]
+    },
+
+    "space": {
+      "unit": 4,
+      "scale": { "1": "4px", "2": "8px", "3": "12px", "4": "16px", "5": "20px", "6": "26px", "7": "32px", "8": "40px", "9": "56px", "10": "72px", "11": "88px", "12": "124px", "13": "160px" },
+      "layout": {
+        "maxWidth": "1180px",
+        "gutter": { "desktop": "80px", "tablet": "48px", "mobile": "28px" },
+        "sectionY": { "desktop": "160px", "mobile": "104px" },
+        "columnGap": "88px",
+        "navHeight": { "desktop": "74px", "mobile": "64px" }
+      },
+      "radius": { "none": "0", "panel": "10px", "note": "Zero radius on buttons, pills, rules, dots. 10px only on large media panels." },
+      "border": { "hairline": "1px", "emphasis": "2px", "accentBar": "3px" },
+      "shadow": { "panel": "0 16px 40px rgba(23,36,43,0.18)", "note": "One shadow value only. Nothing else casts." }
+    },
+
+    "motion": {
+      "principle": "One thing moves per beat. Motion explains structure; it never decorates.",
+      "easing": {
+        "rise": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "scale": "cubic-bezier(0.25, 1, 0.5, 1)",
+        "settle": "cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+        "standard": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "fade": "ease-out"
+      },
+      "duration": { "instant": "200ms", "quick": "250ms", "base": "350ms", "reveal": "700ms", "sequence": "2000ms", "draw": "1900ms" },
+      "signature": {
+        "name": "Signature sequence",
+        "use": "Opens and closes anything with a timeline — video, deck, screen recording.",
+        "totalIn": "2.0s, then hold",
+        "beats": [
+          { "beat": 1, "element": "Wordmark rises out of a mask", "start": "0.0s", "duration": "0.6s", "easing": "rise" },
+          { "beat": 2, "element": "Teal rule scales out from centre", "start": "0.4s", "duration": "0.7s", "easing": "scale" },
+          { "beat": 3, "element": "Square dot drops and settles", "start": "0.9s", "duration": "0.8s", "easing": "settle", "locked": true, "detail": "Falls 1.6em, lands at 30%, overshoots up 0.12em, returns, overshoots 0.045em, rests. Never re-time." },
+          { "beat": 4, "element": "Subtitle fades up into position", "start": "1.5s", "duration": "0.5s", "easing": "fade" }
+        ]
+      },
+      "permitted": [
+        { "name": "Mask rise", "use": "Headlines, word cascades", "transform": "translateY(106%) → 0" },
+        { "name": "Scale from centre", "use": "Rules, dividers", "transform": "scaleX(0) → 1", "origin": "center" },
+        { "name": "Drop and settle", "use": "The dot only", "transform": "translateY(-1.6em) → 0 with double overshoot" },
+        { "name": "Blur fade up", "use": "Everything else", "transform": "translateY(28px) → 0", "filter": "blur(6px) → 0" }
+      ],
+      "forbidden": ["Slide in from left or right", "Rotate or spin", "Bounce anything except the dot", "Animate two elements on the same beat", "Parallax", "Cursor-following effects", "Card tilt", "Sheen or border sweeps", "Marquees"],
+      "reducedMotion": "Under prefers-reduced-motion every sequence degrades to its rest state. No exceptions, including the signature."
+    },
+
+    "voice": {
+      "positioning": "Clinical risk and quality advisory for hospital operations leaders. Decision models built on the data hospitals already have.",
+      "titles": { "use": ["Clinical Risk Manager", "Clinical Risk & Quality"], "avoid": ["Invented title constructions"] },
+      "credentials": "MPH · PG Cert Business Analytics · CPHQ",
+      "rules": [
+        "State status honestly: Prototype — not deployed. Piloted — not in routine use.",
+        "No superlatives, no metadiscourse, no em-dash rhetoric.",
+        "Numbers only where they were measured."
+      ]
+    }
+  },
+
+  "microsoft": {
+    "note": "Drop-in payloads for Microsoft surfaces. Values are flattened to hex where the host cannot carry alpha.",
+
+    "officeThemeColors": {
+      "note": "Maps to a .thmx colour scheme. Office paints dk1 as body text and lt1 as page ground, so dk1/lt1 are inverted relative to the dark website.",
+      "dk1": "17242B",
+      "lt1": "FDFBF7",
+      "dk2": "1E2A32",
+      "lt2": "E4EFEB",
+      "accent1": "008080",
+      "accent2": "00A3A3",
+      "accent3": "60AFAD",
+      "accent4": "89C2C0",
+      "accent5": "ACD4D1",
+      "accent6": "BBDBD8",
+      "hlink": "008080",
+      "folHlink": "0C4E52"
+    },
+
+    "officeThemeFonts": {
+      "majorLatin": "Plus Jakarta Sans",
+      "minorLatin": "Plus Jakarta Sans",
+      "labelLatin": "Space Grotesk",
+      "installFallback": { "major": "Segoe UI Semibold", "minor": "Segoe UI" },
+      "note": "Both faces must be installed locally for PowerPoint and Word to render the identity. Without them Office silently substitutes Calibri — set the Segoe UI fallbacks in the theme rather than allowing that."
+    },
+
+    "powerPoint": {
+      "slideSize": { "width": 1920, "height": 1080, "unit": "px", "aspect": "16:9" },
+      "safeMargin": "96px",
+      "titleSlide": { "background": "#17242B", "title": { "font": "Plus Jakarta Sans", "weight": 800, "size": "96pt", "color": "#FDFBF7" }, "eyebrow": { "font": "Space Grotesk", "size": "18pt", "tracking": "0.20em", "case": "uppercase", "color": "#008080" } },
+      "contentSlide": { "background": "#FDFBF7", "title": { "size": "44pt", "color": "#17242B" }, "body": { "size": "20pt", "color": "rgba(23,36,43,0.62)", "minimum": "18pt" } },
+      "sectionBreak": { "background": "#17242B", "rule": { "color": "#008080", "height": "4px", "width": "620px" } },
+      "tableHeader": { "font": "Space Grotesk", "size": "12pt", "case": "uppercase", "tracking": "0.14em", "color": "#008080", "fill": "none", "borderBottom": "1px solid rgba(23,36,43,0.14)" }
+    },
+
+    "powerBI": {
+      "note": "Save this object on its own as mmonfar-powerbi-theme.json and import via View → Themes → Browse for themes.",
+      "name": "mmonfar.",
+      "dataColors": ["#008080", "#00A3A3", "#60AFAD", "#89C2C0", "#ACD4D1", "#BBDBD8", "#0C4E52", "#E4EFEB"],
+      "background": "#FDFBF7",
+      "foreground": "#17242B",
+      "tableAccent": "#008080",
+      "good": "#008080",
+      "neutral": "#ACD4D1",
+      "bad": "#8C3A2E",
+      "maximum": "#008080",
+      "center": "#89C2C0",
+      "minimum": "#E4EFEB",
+      "null": "#E3E5E4",
+      "textClasses": {
+        "title": { "fontFace": "Plus Jakarta Sans", "fontSize": 20, "color": "#17242B" },
+        "header": { "fontFace": "Plus Jakarta Sans", "fontSize": 14, "color": "#17242B" },
+        "label": { "fontFace": "Space Grotesk", "fontSize": 10, "color": "#6E7B80" },
+        "callout": { "fontFace": "Plus Jakarta Sans", "fontSize": 40, "color": "#008080" }
+      },
+      "visualStyles": {
+        "*": {
+          "*": {
+            "background": [{ "show": false }],
+            "border": [{ "show": true, "color": { "solid": { "color": "#E3E5E4" } }, "radius": 0 }],
+            "outspace": [{ "color": { "solid": { "color": "#FDFBF7" } } }],
+            "dropShadow": [{ "show": false }],
+            "title": [{ "show": true, "fontColor": { "solid": { "color": "#008080" } }, "fontFamily": "Space Grotesk", "fontSize": 10, "alignment": "left" }],
+            "categoryAxis": [{ "labelColor": { "solid": { "color": "#6E7B80" } }, "fontFamily": "Space Grotesk", "fontSize": 9, "gridlineShow": false }],
+            "valueAxis": [{ "labelColor": { "solid": { "color": "#6E7B80" } }, "fontFamily": "Space Grotesk", "fontSize": 9, "gridlineShow": true, "gridlineColor": { "solid": { "color": "#E3E5E4" } }, "gridlineThickness": 1 }],
+            "legend": [{ "labelColor": { "solid": { "color": "#6E7B80" } }, "fontFamily": "Space Grotesk", "fontSize": 9, "position": "TopLeft" }],
+            "labels": [{ "color": { "solid": { "color": "#17242B" } }, "fontFamily": "Space Grotesk", "fontSize": 9 }]
+          }
+        },
+        "page": { "*": { "background": [{ "color": { "solid": { "color": "#FDFBF7" } }, "transparency": 0 }], "outspace": [{ "color": { "solid": { "color": "#FDFBF7" } } }] } },
+        "card": { "*": { "labels": [{ "color": { "solid": { "color": "#008080" } }, "fontFamily": "Plus Jakarta Sans", "fontSize": 32 }], "categoryLabels": [{ "color": { "solid": { "color": "#6E7B80" } }, "fontFamily": "Space Grotesk", "fontSize": 9 }] } },
+        "lineChart": { "*": { "lineStyles": [{ "strokeWidth": 2, "showMarker": false }] } }
+      }
+    },
+
+    "fluentTheme": {
+      "note": "Fluent UI / Teams app palette slots.",
+      "themePrimary": "#008080",
+      "themeLighterAlt": "#F2F9F9",
+      "themeLighter": "#CFE9E9",
+      "themeLight": "#A8D6D6",
+      "themeTertiary": "#60AFAD",
+      "themeSecondary": "#1A8F8F",
+      "themeDarkAlt": "#007373",
+      "themeDark": "#006161",
+      "themeDarker": "#004747",
+      "neutralPrimary": "#17242B",
+      "neutralSecondary": "#6E7B80",
+      "neutralTertiary": "#B3BABD",
+      "neutralLight": "#E3E5E4",
+      "neutralLighter": "#EFF0EE",
+      "neutralLighterAlt": "#F8F6F2",
+      "white": "#FDFBF7",
+      "black": "#17242B"
+    },
+
+    "wordStyles": {
+      "note": "Named paragraph styles to create in the Word template.",
+      "Title": { "font": "Plus Jakarta Sans", "weight": 800, "size": "32pt", "spacing": "-0.04em", "color": "#17242B", "spaceAfter": "12pt" },
+      "Heading 1": { "font": "Plus Jakarta Sans", "weight": 800, "size": "18pt", "color": "#17242B", "spaceBefore": "24pt", "spaceAfter": "8pt" },
+      "Heading 2": { "font": "Plus Jakarta Sans", "weight": 700, "size": "14pt", "color": "#17242B" },
+      "Eyebrow": { "font": "Space Grotesk", "weight": 700, "size": "9pt", "case": "uppercase", "spacing": "0.20em", "color": "#008080" },
+      "Body Text": { "font": "Plus Jakarta Sans", "weight": 400, "size": "11pt", "lineHeight": "1.6", "color": "#17242B" },
+      "Caption": { "font": "Space Grotesk", "weight": 400, "size": "9pt", "color": "#6E7B80" },
+      "Table Header": { "font": "Space Grotesk", "weight": 700, "size": "9pt", "case": "uppercase", "spacing": "0.14em", "color": "#008080" }
+    },
+
+    "outlookSignature": {
+      "nameFont": "Plus Jakarta Sans, Segoe UI, sans-serif",
+      "name": { "size": "16px", "weight": 800, "spacing": "-0.03em", "color": "#17242B" },
+      "role": { "font": "Space Grotesk, Segoe UI, sans-serif", "size": "11px", "case": "uppercase", "spacing": "0.14em", "color": "#008080" },
+      "rule": { "height": "1px", "color": "#E3E5E4", "margin": "10px 0" },
+      "detail": { "size": "12px", "color": "#6E7B80" },
+      "note": "Outlook strips webfonts. Segoe UI is the intended render on Windows; keep the wordmark as a PNG at 2× with the square dot baked in."
+    }
+  },
+
+  "files": {
+    "css": "mmonfar-brand.css",
+    "webfonts": "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap"
+  }
+}
