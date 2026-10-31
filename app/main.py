@@ -50,13 +50,24 @@ TEAL = brand_tokens.TEAL
 AMBER = "#c98a1b"
 RED = "#b3402f"
 
-mmst.apply(st, page_title="Staff Planner", page_icon="📊")
+mmst.apply(st, page_title="Staff Planner")
 mmmpl.apply()
 
-st.title("📊 Staff Planner")
+# Plain readability fixes: no cut-off KPI values, body text at least 14 px.
+st.markdown(
+    "<style>" + '[data-testid="stMetricValue"] {font-size: 1.5rem; line-height: 1.2;} [data-testid="stMetricValue"] > div, [data-testid="stMetricLabel"] p, [data-testid="stMetricDelta"] > div {white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere;} [data-testid="stMetricLabel"] p, [data-testid="stMetricDelta"] {font-size: 0.9rem;} [data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p {font-size: 0.9rem;} .mm-brandline {font-weight: 800; font-size: 1.15rem; letter-spacing: -0.03em; margin: 0;} .mm-brandline i {display: inline-block; width: 0.25em; height: 0.25em; margin-left: 2px; background: #008080;}' + "</style>"
+    '<p class="mm-brandline">mmonfar<i aria-hidden="true"></i></p>',
+    unsafe_allow_html=True,
+)
+st.title("Staff Planner")
 st.caption(
     "Acuity-driven establishment planning. Demand comes from the Safer Nursing "
     "Care Tool ladder; ratios are tested against it, not assumed adequate."
+)
+st.caption("Demonstration tool on synthetic data. Not staffing advice.")
+st.info(
+    "**Step 1:** set your ward in the left panel (beds, census, case mix). "
+    "**Step 2:** read the verdict below: does each staffing model meet demand?"
 )
 
 # --- inputs -----------------------------------------------------------------
@@ -89,7 +100,7 @@ with sb.expander("Acuity mapping", expanded=False):
         hide_index=True, use_container_width=True,
     )
 
-with sb.expander("Policy", expanded=True):
+with sb.expander("Policy", expanded=False):
     policy = st.slider(
         "Meet demand this often", 0.50, 0.99, 0.90, 0.01,
         help="SNCT modelling found policies meeting demand 90% of the time "
@@ -103,13 +114,13 @@ with sb.expander("Policy", expanded=True):
     )
 
 sb.header("Models")
-with sb.expander("Model A — 3 × 8h, 40h week", expanded=True):
+with sb.expander("Model A — 3 × 8h, 40h week", expanded=False):
     a_sn = st.number_input("SN ratio", min_value=1, value=8, step=1, key="a_sn")
     a_pn = st.number_input("PN ratio", min_value=1, value=12, step=1, key="a_pn")
     a_hca = st.number_input("HCA ratio", min_value=1, value=16, step=1, key="a_hca")
     a_ot = st.number_input("SN overtime h/week", min_value=0, value=0, step=1, key="a_ot")
 
-with sb.expander("Model B — 2 × 12h, 48h week", expanded=True):
+with sb.expander("Model B — 2 × 12h, 48h week", expanded=False):
     b_sn = st.number_input("SN ratio", min_value=1, value=3, step=1, key="b_sn")
     b_hca = st.number_input("HCA ratio", min_value=1, value=16, step=1, key="b_hca")
     b_ot = st.number_input("SN overtime h/week", min_value=0, value=0, step=1, key="b_ot")

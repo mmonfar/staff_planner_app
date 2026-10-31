@@ -1,6 +1,9 @@
 [theme]
-primaryColor = "#4CAF50"      # Adjust primary color if desired
+primaryColor = "#008080"      # mmonfar teal (4.8:1 on white)
 backgroundColor = "#FFFFFF"   # Light background color
 secondaryBackgroundColor = "#F0F0F0"  # Sidebar background
 textColor = "#000000"         # Dark text
 font = "sans serif"           # Default font
+
+[client]
+toolbarMode = "minimal"   # hides the Deploy button; keeps the menu and the sidebar toggle
