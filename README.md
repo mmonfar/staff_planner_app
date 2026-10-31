@@ -119,6 +119,15 @@ CMI→acuity tilt, the base acuity mix, census dispersion and CMI variability.
 
 Contributions are welcome! Feel free to open issues or submit pull requests.
 
+## References
+
+Key sources. The full evidence table is in [research/SOURCES.md](research/SOURCES.md).
+
+- Aiken, L. H., Sloane, D. M., Bruyneel, L., et al. (2014). Nurse staffing and education and hospital mortality in nine European countries: a retrospective observational study. *The Lancet*, 383(9931), 1824-1830. https://doi.org/10.1016/S0140-6736(13)62631-8
+- NIHR Journals Library (2020). The Safer Nursing Care Tool as a guide to nurse staffing requirements on hospital wards: observational and modelling study. *Health Services and Delivery Research*, 8(16).
+
+Some defaults are assumptions, not literature values: grade cost weights, the base acuity mix and the task profile. They are marked as assumptions in the code and in SOURCES.md.
+
 ## Licence
 
 Code is licensed under **AGPL-3.0-or-later** (see [`LICENSE`](LICENSE)); a commercial licence is available on request from the author via [LinkedIn](https://www.linkedin.com/in/martin-monteagudo-farina/). Non-code content is under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/). Details in [`LICENSING.md`](LICENSING.md).

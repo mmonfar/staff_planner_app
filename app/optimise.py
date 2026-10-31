@@ -45,6 +45,7 @@ from app.roles import (
 )
 from app.wellbeing import ShiftPattern, assess
 
+# Relative cost per hour by grade (registered nurse = 1.0). ASSUMPTION, not from literature (Source needed). Replace with your own pay-scale ratios.
 DEFAULT_COSTS = {"sn": 1.0, "pn": 0.65, "hca": 0.4, "porter": 0.3}
 
 # An additional policy floor on registered-nurse hours, over and above whatever

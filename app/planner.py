@@ -29,6 +29,7 @@ DAYS_PER_YEAR = 365
 MODEL_A_SHIFTS = {"early": 8, "late": 8, "night": 8}
 MODEL_B_SHIFTS = {"day": 12, "night": 12}
 
+# Relative cost per hour by grade (registered nurse = 1.0). ASSUMPTION, not from literature (Source needed). Replace with your own pay-scale ratios.
 DEFAULT_COSTS = {"sn": 1.0, "pn": 0.65, "hca": 0.4}
 
 # Establishment uplift covering annual leave, sickness AND training, from the
