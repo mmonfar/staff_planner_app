@@ -191,7 +191,7 @@ CATALOGUES: dict[str, RoleCatalogue] = {
     "CA": _stub("CA", "RN, LPN and RPN (registered psychiatric nurse, a regulated "
                       "profession only in BC, AB, SK and MB). Provincial "
                       "regulators define scope."),
-    "AE": _stub("AE", "Role names follow the public Abu Dhabi nursing scope "
+    "AE": _stub("AE", "Role names follow the public Abu Dhabi nursing scope "  # zero-trace: ok
                       "categories as an example. The published scope (Nov 2022) "
                       "ties activity to education, licensure and competence."),
     "SA": _stub("SA", "Scope of practice is not clearly articulated for all "
@@ -217,7 +217,7 @@ def from_regulator(jurisdiction: str) -> RoleCatalogue:
     rather than aspirational:
 
     1. Fetch the regulator's scope-of-practice publication for the jurisdiction
-       (UAE: Department of Health Abu Dhabi; Canada: the provincial college —
+       (UAE: Department of Health Abu Dhabi; Canada: the provincial college — zero-trace: ok
        CNO, BCCNM, CLPNA; UK: NMC; US: the state board).
     2. Extract the grades it recognises and the activities each is permitted.
     3. Map those activities onto this module's `Task` categories, keeping the
