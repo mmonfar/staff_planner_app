@@ -191,9 +191,9 @@ CATALOGUES: dict[str, RoleCatalogue] = {
     "CA": _stub("CA", "RN, LPN and RPN (registered psychiatric nurse, a regulated "
                       "profession only in BC, AB, SK and MB). Provincial "
                       "regulators define scope."),
-    "AE": _stub("AE", "Department of Health Abu Dhabi publishes a nursing scope "
-                      "of practice (Nov 2022) tying activity to education, "
-                      "licensure and competence."),
+    "AE": _stub("AE", "Role names follow the public Abu Dhabi nursing scope "
+                      "categories as an example. The published scope (Nov 2022) "
+                      "ties activity to education, licensure and competence."),
     "SA": _stub("SA", "Scope of practice is not clearly articulated for all "
                       "nursing categories, which is itself the finding — a "
                       "catalogue here will need primary work, not a lookup."),

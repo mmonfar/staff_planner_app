@@ -541,3 +541,6 @@ st.caption(
     "of any kind; the author accepts no liability for any use. Uses synthetic data only. "
     "Personal project · not affiliated with any employer · synthetic data only."
 )
+st.caption(
+    "Not affiliated with or endorsed by any health regulator. Regulator names are used only to describe example role categories."
+)
