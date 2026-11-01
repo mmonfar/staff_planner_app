@@ -2,6 +2,12 @@
 
 An acuity-driven nurse establishment planner built with Python and Streamlit.
 
+![Staff Planner showing whether each staffing model meets nursing demand, desktop view](docs/screenshots/readme_desktop.png)
+
+On a phone: <img src="docs/screenshots/readme_phone.png" alt="Same screen on a phone, 390 pixels wide" width="195">
+
+*Screenshot with synthetic data.*
+
 It answers one question: **does this staffing ratio actually meet the nursing
 demand this ward generates?** Demand comes from the Safer Nursing Care Tool
 acuity ladder — a Level 3 patient needs 6x the nursing time of a Level 0 — and
