@@ -41,14 +41,13 @@ from app.planner import (
 from app.stochastic import HPPD_SANITY_BAND, StochasticPlanner
 
 # Palette from the canonical mmonfar. tokens (brand-identity is the single
-# source of truth -- see brand-identity/ADOPTION.md). AMBER and RED are not
-# brand colours (the identity deliberately has only one accent); they are
-# this app's own semantic states for "caution" / "short of demand" and are
-# kept local on purpose.
+# source of truth -- see brand-identity/ADOPTION.md). AMBER and RED keep their
+# names but map to brand tokens (the identity has no red or amber): the
+# second capacity line is a lighter teal tint and the demand line is slate.
 INK = brand_tokens.CANVAS
 TEAL = brand_tokens.TEAL
-AMBER = "#c98a1b"
-RED = "#b3402f"
+AMBER = brand_tokens.SERIES[2]
+RED = brand_tokens.CANVAS
 
 mmst.apply(st, page_title="Staff Planner")
 mmmpl.apply()
@@ -213,7 +212,7 @@ c1, c2 = st.columns(2)
 with c1:
     st.subheader("Demand distribution")
     fig, ax = plt.subplots(figsize=(6, 3.6))
-    ax.hist(res_a["samples"], bins=45, color="#d8d5d3", edgecolor="none")
+    ax.hist(res_a["samples"], bins=45, color=brand_tokens.SERIES[5], edgecolor="none")
     ax.axvline(res_a["demand_mean"], color=INK, ls="--", lw=1.4,
                label=f"mean {res_a['demand_mean']:.0f}h")
     ax.axvline(res_a["demand_target"], color=RED, lw=1.8,
@@ -241,7 +240,7 @@ with c2:
     mix = mix_from_cmi(mean_cmi, tilt=cmi_tilt)
     fig, ax = plt.subplots(figsize=(6, 3.6))
     shares = [mix.proportions[l] for l in LEVELS]
-    bars = ax.bar(list(LEVELS), shares, color=[TEAL, "#4a9d9d", AMBER, "#c96b1b", RED])
+    bars = ax.bar(list(LEVELS), shares, color=[brand_tokens.SERIES[5], brand_tokens.SERIES[4], brand_tokens.SERIES[3], brand_tokens.SERIES[2], TEAL])
     for bar, lvl in zip(bars, LEVELS):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.008,
                 f"{SNCT_GENERAL_WARD[lvl]:.1f}h", ha="center", fontsize=6.5, color=INK)
