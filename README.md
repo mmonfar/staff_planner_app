@@ -1,5 +1,11 @@
 # Staff Planner App
 
+[![Watch the 38-second teaser video](docs/media/teaser_poster.png)](docs/media/teaser.mp4)
+
+A 38-second teaser: how nursing demand is built from patient acuity levels and how the planner finds the cheapest safe staffing for each shift.
+
+Video licence: CC BY-NC 4.0. Synthetic data. Not a medical device.
+
 An acuity-driven nurse establishment planner built with Python and Streamlit.
 
 ![Staff Planner showing whether each staffing model meets nursing demand, desktop view](docs/screenshots/readme_desktop.png)
