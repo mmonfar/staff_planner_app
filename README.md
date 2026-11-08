@@ -102,13 +102,15 @@ The app includes a styles.css file for custom styles (e.g., sidebar colors, font
 
 ## 🛡️ Testing
 
-Tests live in `tests/test_planner.py` and run with pytest:
+Tests live in `tests/` and run with pytest:
 
     python -m pytest
 
-Tests marked `xfail` are **not** flaky — they document confirmed defects in the
-demand formula (see the note below) and describe the behaviour the planner
-should have. They will flip to passing when that formula is corrected.
+Check that the status docs match the code and tests:
+
+    python tests/check_status_ids.py
+
+Tests: 110 passing (pytest, run 2026-11-08).
 
 ## ⚠️ Status
 

@@ -2,7 +2,9 @@
 
 Maintained by the orchestrator session. Update on every completed task.
 
-**Completion: 24 / 25 (96%). Scope-aware, licensed, CI'd.**
+**Completion: 24 / 26 tasks closed (task 11 open, task 14 on hold). Scope-aware, licensed, CI'd.**
+
+Tests: 110 passing (pytest, run 2026-11-08).
 
 ## The problem (restated 2026-09-18)
 
@@ -50,7 +52,7 @@ being tractable. Aggregate mix = MILP. Individual roster = metaheuristic.
 | # | Task | Evidence |
 |---|---|---|
 | 1 | Repo structure | `.gitignore`, `pyproject.toml`, pinned `requirements.txt` |
-| 2 | Test harness | `tests/test_planner.py` — 8 pass, 4 strict xfail |
+| 2 | Test harness | `tests/test_planner.py` (the 4 early xfail markers are gone; defects fixed by tasks 5-7) |
 | 3 | UI-layer bugs | sidebar costs wired, `styles.css` loaded, dead code removed, figure leak closed |
 | 4 | Method verdict | brain ledger, twice revised; exact-first ladder settled |
 | 18 | Evidence store + standards research | `research/evidence.db` — 8 sources, 22 params, 21 retrievals logged |
@@ -77,7 +79,6 @@ being tractable. Aggregate mix = MILP. Individual roster = metaheuristic.
 ## Pending
 | # | Task | Blocks | P |
 |---|---|---|---|
-| 21 | **Surface stochasticity in the UI** — the app still shows single numbers; p90 band, shortfall risk and gate status are computed but not displayed | — | P0 |
 | 11 | MCP config: pin interpreter, drop duplicate defs (cross-repo) | — | P2 |
 | 14 | NSGA-II — **only if** 16 proves intractable or wellbeing goes nonlinear | — | HOLD |
 
@@ -89,9 +90,9 @@ tasks needing domain input, not code. Then 16, gated by 15. Then 17.
 
 ## Wellbeing findings that change the model
 - **Absence is endogenous.** Understaffing raises sickness absence, which
-  worsens understaffing (dallora-2025). `unplanned_absence` is still an
-  exogenous input to `StochasticPlanner`; `wellbeing.absence_feedback()` exists
-  but is not yet wired into establishment sizing. **Task 23, P1.**
+  worsens understaffing (dallora-2025). `StochasticPlanner` now applies
+  `wellbeing.absence_feedback()` when `absence_is_endogenous` is on (default).
+  **Task 23, done.**
 - **Model B breaches the EWTD night-work default** and scores 79.9/100 against
   Model A's 100. Cheaper in money is not cheaper overall.
 - **Cost and wellbeing are not purely opposed.** A richer RN mix lowers sickness
