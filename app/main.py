@@ -38,6 +38,7 @@ from app.planner import (
     Model,
     StaffPlanner,
 )
+from app.band_message import band_message
 from app.stochastic import HPPD_SANITY_BAND, StochasticPlanner
 
 # Palette from the canonical mmonfar. tokens (brand-identity is the single
@@ -192,13 +193,9 @@ for label, res, cost in (("Model A", res_a, cost_a), ("Model B", res_b, cost_b))
     cols[4].metric("Relative cost", f"{cost['total_cost']:.1f}")
 
 low, high = HPPD_SANITY_BAND
-if not res_a["hppd_in_band"]:
-    st.warning(
-        f"Demand is **{res_a['hppd_mean']:.2f} HPPD**, outside the SNCT observed "
-        f"band of {low}–{high} for adult inpatient wards. At this case mix the "
-        "ward is no longer a general ward, and general-ward multipliers may not "
-        "describe it. Treat the numbers as indicative only."
-    )
+band_note = band_message(res_a["hppd_mean"], mean_census)
+if band_note:
+    st.warning(band_note)
 if not (res_a["baseline_gate_passed"] and res_b["baseline_gate_passed"]):
     st.error(
         "Baseline gate failed: the simulation diverged from its analytic "
