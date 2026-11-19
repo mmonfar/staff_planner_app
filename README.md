@@ -84,6 +84,10 @@ staff-planner-app/
 
    For a runtime-only install, `pip install -r requirements.txt` also works.
 
+   The mmonfar. brand package is optional (it is not on PyPI). Without it the
+   app uses a built-in fallback with the same colours. With the local repo:
+   `pip install -e ../brand-identity[streamlit,matplotlib]`.
+
 3. Start the Streamlit App: Run the app using the streamlit CLI tool:
 
    streamlit run app/main.py

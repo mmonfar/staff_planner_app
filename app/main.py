@@ -17,9 +17,14 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
 
-from mmonfar_brand import matplotlib as mmmpl
-from mmonfar_brand import streamlit as mmst
-from mmonfar_brand import tokens as brand_tokens
+try:  # optional: the full brand package (local repo, not on PyPI)
+    from mmonfar_brand import matplotlib as mmmpl
+    from mmonfar_brand import streamlit as mmst
+    from mmonfar_brand import tokens as brand_tokens
+except ImportError:  # built-in fallback: same tokens, simpler styling
+    from app._brand_fallback import matplotlib as mmmpl
+    from app._brand_fallback import streamlit as mmst
+    from app._brand_fallback import tokens as brand_tokens
 
 from app.acuity import DEFAULT_BASE_MIX, LEVELS, SNCT_GENERAL_WARD, mix_from_cmi
 from app.audit import evidence_fingerprint, history, log_run

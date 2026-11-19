@@ -11,19 +11,19 @@ description = "Acuity-driven nurse establishment planner"
 license = "AGPL-3.0-or-later"
 license-files = ["LICENSE"]
 requires-python = ">=3.11"
-# mmonfar-brand is not on PyPI; it is a sibling repo in this monorepo layout
-# (Python_Projects/brand-identity), the single source of truth for the
-# identity. Install it first: `pip install -e ../brand-identity[streamlit,matplotlib]`.
+# mmonfar-brand is optional and not on PyPI (sibling repo brand-identity). Without
+# it the app uses app/_brand_fallback.py. Local install: `pip install -e
+# ../brand-identity[streamlit,matplotlib]`.
 dependencies = [
     "streamlit==1.57.0",
     "matplotlib==3.11.1",
     "pandas==3.0.5",
     "pulp==3.3.2",
-    "mmonfar-brand",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
+brand = ["mmonfar-brand"]
 
 [tool.setuptools]
 packages = ["app"]
